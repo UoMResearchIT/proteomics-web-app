@@ -2,6 +2,7 @@ library(shiny)
 library(ggplot2)
 library(readxl)
 library(tidyverse)
+library(plotly)
 
 ui <- fluidPage(
   theme = bslib::bs_theme(bootswatch = "darkly"),
@@ -18,8 +19,9 @@ ui <- fluidPage(
   mainPanel(
     tabsetPanel(
       tabPanel('BoxPlot', 
-       plotOutput("plot", click = "plot_click"),
+       plotlyOutput("plot_bar"),#, click = "plot_click", hover = 'plot_bar_hover'),
       # verbatimTextOutput("info"),
+       plotlyOutput("plot_box"),
        tableOutput("near_rows_data")
     ),
       tabPanel('PCA', 'Plot ot be added'),
@@ -45,12 +47,14 @@ server <- function(input, output, session) {
     head(data(), 5)
   })
   output$near_rows_data <- renderTable({
-    req(input$plot_click)
+    req(input$plot_bar_hover)
     df <- data()
     nearPoints(df[df$gene.names == input$gene_dropdown,],
                input$plot_click,
                maxpoints = 5)
   })
+  
+
   output$toCol <- renderUI({
     df <- data()
     items <- unique(df$gene.names)
@@ -62,9 +66,66 @@ server <- function(input, output, session) {
     df <- data()
     df |>
       filter(gene.names == input$gene_dropdown) |>
-      ggplot(aes(x = experiment, y = expression)) +
-      geom_point()
+      mutate(experiment_type = str_extract(experiment, "[A-Z]+")) |>
+      ggplot(aes(x = experiment_type, y = expression)) +
+      geom_boxplot()
   }, res = 96)
+  
+  
+  output$plot_bar <- renderPlotly({
+    req(input$gene_dropdown)
+    df <- data()
+    df.plot <- df |>
+      filter(gene.names == input$gene_dropdown) |>
+      mutate(experiment_type = str_extract(experiment, "[A-Z]+"))
+      p <- ggplot(data = df.plot, aes(x = experiment, y = expression)) 
+      p <- p + geom_bar(mapping = aes(x = experiment,
+                             y = expression,
+                             fill = experiment_type),
+               stat = "identity",
+               col = "black") +
+      xlab("") +
+      scale_y_continuous(name = "Normalized Log2-protein intensity") +
+      # ggtitle(paste("Template data set", plot.data$Gene.symbol[1], sep = ", ")) +
+      theme_light() +
+      theme(axis.text = element_text(size = 10,
+                                     colour = "black"),
+            legend.text = element_text(size = 10),
+            legend.position = "right",
+            legend.box.just = "center") +
+      labs(NULL)
+      ggplotly(p)
+  })
+  
+  output$plot_box <- renderPlotly({
+    req(input$gene_dropdown)
+    df <- data()
+    df.plot <- df |>
+      filter(gene.names == input$gene_dropdown) |>
+      mutate(experiment_type = str_extract(experiment, "[A-Z]+"))
+      p <- ggplot(data = df.plot, aes(x = experiment_type, y = expression)) 
+      p <- p + geom_boxplot(mapping = aes(x = experiment_type,
+                                          y = expression,
+                                          fill = experiment_type),
+                            col = "black") +
+        #geom_point(data = meanvalues,
+         #          aes(x = experiment_type,
+          #             y = Mean),
+           #        pch = 18, size = 3,) +
+        geom_point(mapping = aes(x = experiment_type,
+                                 y = expression),
+                   pch = 20, size = 1.5) +
+        xlab("") +
+        scale_y_continuous(name = "Normalized Log2-protein intensity") +
+        theme_light() +
+        theme(axis.text = element_text(size = 10,
+                                       colour = "black"),
+              legend.text = element_text(size = 10),
+              legend.position = "none")
+      ggplotly(p)
+    
+  })
+  
   
   output$info <- renderPrint({
     req(input$plot_click)
