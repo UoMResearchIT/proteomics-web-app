@@ -24,7 +24,8 @@ ui <- fluidPage(
        plotlyOutput("plot_box"),
        tableOutput("near_rows_data")
     ),
-      tabPanel('PCA', 'Plot ot be added'),
+      tabPanel('PCA',
+               plotOutput('PCA_plot')),
       tabPanel('HeatMap', 'Plot to be added'),
       tabPanel('Correlation','Plot ot be added')
     )
@@ -96,6 +97,35 @@ server <- function(input, output, session) {
       labs(NULL)
       ggplotly(p)
   })
+  output$PCA_plot <- renderPlot({
+    #req(input&upload)
+    df <- openxlsx::read.xlsx("../data/PXDtemplate_pca.xlsx",
+                              rowNames = TRUE)
+    # create the group design
+    design <- data.frame("Samples" = seq(1:nrow(df)),
+                         "Group" = seq(1:nrow(df)))
+    
+    design$Samples <- rownames(df)
+    design$Group <- gsub("_\\d+", "", design$Samples)
+    
+    # Perform a PCA with data pre-processed
+    pca <- pca(X = df,
+               ncomp = nrow(df),
+               center = TRUE,
+               scale = TRUE)
+    
+    # Create a 2D Sample Plot
+    plotIndiv(object = pca,
+                    comp = c(1,2),
+                    ind.names = FALSE,
+                    group = design$Group,
+                    title = "Template data set",
+                    legend = TRUE,
+                    cex = 0.8,
+                    ellipse = TRUE)
+    
+  })
+  
   
   output$plot_box <- renderPlotly({
     req(input$gene_dropdown)
