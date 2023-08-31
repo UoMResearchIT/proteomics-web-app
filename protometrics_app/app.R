@@ -45,18 +45,18 @@ ht <- ComplexHeatmap::Heatmap(x,
                                                                 show_annotation_name = FALSE))
 
 ui <- fluidPage(
-  theme = bslib::bs_theme(bootswatch = "darkly"),
+  theme = bslib::bs_theme(bootswatch = "flatly"),
   div(style = "height:50px"),
   titlePanel('Lennon Lab Proteomic data archive'),
   div(style = "height:50px"),
-  sidebarLayout(
-    sidebarPanel( 
-      fileInput("upload", label = 'Dataset'),
-    #  tableOutput("head"),
-      uiOutput("toCol"),
+  fluidRow(
+    column(6, 
+      fileInput("upload", label = 'Dataset')),
+    column(6,
+      uiOutput("toCol")),
       ),
   
-  mainPanel(
+  fluidRow(
     tabsetPanel(
       tabPanel('BoxPlot', 
        plotlyOutput("plot_bar"),#, click = "plot_click", hover = 'plot_bar_hover'),
@@ -73,7 +73,7 @@ ui <- fluidPage(
     )
   ),
   )
-)
+
 
 server <- function(input, output, session) {
   thematic::thematic_shiny()
