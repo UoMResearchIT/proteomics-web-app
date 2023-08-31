@@ -3,6 +3,46 @@ library(ggplot2)
 library(readxl)
 library(tidyverse)
 library(plotly)
+library(InteractiveComplexHeatmap)
+library(ComplexHeatmap)
+
+
+
+matrix <- openxlsx::read.xlsx("../data/PXDtemplate_heatmap.xlsx",
+                                      rowNames = TRUE)
+x <- as.matrix(matrix)
+x.trunc <- as.vector(unique(x))
+x.trim <- x.trunc[x.trunc>=quantile(x.trunc, probs = 0.01, na.rm = T) &
+                    x.trunc<=quantile(x.trunc, probs = 0.99, na.rm = T)]
+x.max <- which.max(x.trim)
+x.min <- which.min(x.trim)
+# create a color function for the heatmap
+col_fun <- circlize::colorRamp2(c(x.trim[x.min], 0, x.trim[x.max]),
+                                c("blue", "white", "red"),
+                                space = "sRGB")
+# create labels for the heatmap
+rowlab <- gsub(".*,\\s*", "", rownames(x)) # UniProt ID for row labels
+col_lab <- gsub("_", " ", colnames(x)) # for sample annotation
+col_group <- gsub("_\\d+", "", colnames(x)) |> # for group annotation
+  unlist() |> 
+  as.factor()
+# draw a heatmap
+set.seed(3)
+ht <- ComplexHeatmap::Heatmap(x,
+                             name = "Protein level",
+                             col = col_fun,
+                             show_row_names = T,
+                             row_labels = rowlab,
+                             show_column_names = F,
+                             row_title = "Proteins",
+                             row_title_gp = grid::gpar(fontsize = 12,
+                                                       fontface = "bold"),
+                             column_title = "",
+                             row_dend_width = unit(2, "cm"),
+                             row_names_gp = gpar(fontsize = 1),
+                             top_annotation = HeatmapAnnotation(Samples = col_lab,
+                                                                Groups = col_group,
+                                                                show_annotation_name = FALSE))
 
 ui <- fluidPage(
   theme = bslib::bs_theme(bootswatch = "darkly"),
@@ -26,7 +66,9 @@ ui <- fluidPage(
     ),
       tabPanel('PCA',
                plotOutput('PCA_plot')),
-      tabPanel('HeatMap', 'Plot to be added'),
+      tabPanel('HeatMap', 
+               InteractiveComplexHeatmapOutput()
+      ),
       tabPanel('Correlation','Plot ot be added')
     )
   ),
@@ -36,6 +78,8 @@ ui <- fluidPage(
 server <- function(input, output, session) {
   thematic::thematic_shiny()
   
+  makeInteractiveComplexHeatmap(input, output, session, ht)
+
   data <- reactive({
     req(input$upload)
     read_excel(input$upload$datapath)[,-1] |>
@@ -47,6 +91,7 @@ server <- function(input, output, session) {
   output$head <- renderTable({
     head(data(), 5)
   })
+  
   output$near_rows_data <- renderTable({
     req(input$plot_bar_hover)
     df <- data()
@@ -55,7 +100,6 @@ server <- function(input, output, session) {
                maxpoints = 5)
   })
   
-
   output$toCol <- renderUI({
     df <- data()
     items <- unique(df$gene.names)
@@ -71,8 +115,7 @@ server <- function(input, output, session) {
       ggplot(aes(x = experiment_type, y = expression)) +
       geom_boxplot()
   }, res = 96)
-  
-  
+
   output$plot_bar <- renderPlotly({
     req(input$gene_dropdown)
     df <- data()
