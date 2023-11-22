@@ -1,3 +1,6 @@
+# settings
+font_family <- 'Courier'
+
 
 box_plot <- function(gene_dropdown, data){
   #req(input$gene_dropdown)
@@ -17,9 +20,14 @@ box_plot <- function(gene_dropdown, data){
     xlab("") +
     scale_y_continuous(name = "Normalized Log2-protein intensity") +
     theme_light() +
-    theme(axis.text = element_text(size = 10,
-                                   colour = "black"),
-          legend.text = element_text(size = 10),
+    theme(text = element_text(family = font_family),
+          axis.text.x = element_text(size = 10,
+                                   colour = "black",
+                                   family = font_family),
+          axis.text.y = element_text(size = 10,
+                                     colour = "black",
+                                     family = font_family),
+          legend.text = element_text(size = 10, family = font_family),
           legend.position = "right ")
   ggplotly(p)
 }
@@ -106,9 +114,15 @@ bar_plot <- function(gene_dropdown, data){
     scale_y_continuous(name = "Normalized Log2-protein intensity") +
     # ggtitle(paste("Template data set", plot.data$Gene.symbol[1], sep = ", ")) +
     theme_light() +
-    theme(axis.text = element_text(size = 10,
-                                   colour = "black"),
-          legend.text = element_text(size = 10),
+    theme(text = element_text(family = font_family),
+          axis.text.x = element_text(size = 10,
+                                   colour = "black",
+                                   family = font_family,
+                                   angle = 45),
+          axis.text.y = element_text(size = 10,
+                                     colour = "black",
+                                     family = font_family),
+          legend.text = element_text(size = 10, family = font_family),
           legend.position = "none",
           legend.box.just = "center") +
     labs(NULL)
