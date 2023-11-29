@@ -27,4 +27,17 @@ The code for these plots is in plot_functions.R
 
 ## Description of .R files
 
+### app.R
+Contains the ui and server logic and runs shinyApp(ui, server).
+
+ui - determines the app layout
+
+server - contains the reactive logic and functionality of the app
+
+### plot_functions.R
+Contains the business logic of the app, code for making the plots. 
+
+### ./data
+Place all datasets here. They should be .xlsx files and follow the same format as the cell_prot_final and prot_final demo files. The name to be displayed in the dropdown menu of 'Choose a dataset' should be the same as the name of the file. 
+
 
