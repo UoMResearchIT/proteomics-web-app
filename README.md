@@ -40,4 +40,15 @@ Contains the business logic of the app, code for making the plots.
 ### ./data
 Place all datasets here. They should be .xlsx files and follow the same format as the cell_prot_final and prot_final demo files. The name to be displayed in the dropdown menu of 'Choose a dataset' should be the same as the name of the file. 
 
+## Ideas to make web site have a login feature
+- Add an authentication layer to your shiny apps https://paulc91.github.io/shinyauthr/
+
+- Google authentication types for R https://code.markedmondson.me/googleAuthR/articles/google-authentication-types.html
+
+- Only allow users with a University of Manchester account to access the server - not sure if this is possible. 
+
+This all needs discussion with WADS team. And consideration needs to be given to the security risks of storing database of user details. 
+
+
+
 
