@@ -1,7 +1,10 @@
 # settings
 font_family <- 'Courier'
 
+# plotting scripts
 
+# TAB1
+## box plot
 box_plot <- function(gene_dropdown, data){
   #req(input$gene_dropdown)
   df <- data
@@ -31,7 +34,42 @@ box_plot <- function(gene_dropdown, data){
           legend.position = "right ")
   ggplotly(p)
 }
+## bar plot
+bar_plot <- function(gene_dropdown, data){
+  df <- data
+  df.plot <- df |>
+    filter(gene.names == gene_dropdown) |>
+    mutate(experiment_type = str_extract(experiment, "[A-Z]+"))
+  p <- ggplot(data = df.plot, aes(x = experiment, y = expression)) 
+  p <- p + geom_bar(mapping = aes(x = experiment,
+                                  y = expression,
+                                  fill = experiment_type),
+                    stat = "identity",
+                    col = "black") +
+    xlab("") +
+    scale_y_continuous(name = "Normalized Log2-protein intensity") +
+    # ggtitle(paste("Template data set", plot.data$Gene.symbol[1], sep = ", ")) +
+    theme_light() +
+    theme(text = element_text(family = font_family),
+          axis.text.x = element_text(size = 10,
+                                     colour = "black",
+                                     family = font_family,
+                                     angle = 45),
+          axis.text.y = element_text(size = 10,
+                                     colour = "black",
+                                     family = font_family),
+          legend.text = element_text(size = 10, family = font_family),
+          legend.position = "none",
+          legend.box.just = "center") +
+    labs(NULL)
+  ggplotly(p)
+}
 
+# TAB3
+## HeatMap
+### The data for this plot comes from ./proteomics-web-app/data/PXDtemplate_heatmap.xlsx
+### This data is preprocessed specifically to make a heatmap. 
+### TODO: Preprocessing of data should happen within app so it can be applied to any selected dataset
 function.heatmap <- function(){
   # getting data needs to be reactive from a chosen dataset
   matrix <- openxlsx::read.xlsx("../data/PXDtemplate_heatmap.xlsx",
@@ -72,6 +110,11 @@ function.heatmap <- function(){
   return(ht)
 }
 
+# TAB2
+## PCA plot
+### The data for this plot comes from ./proteomics-web-app/data/PXDtemplate_pca.xlsx
+### This data is preprocessed specifically to make a heatmap. 
+### TODO: Preprocessing of data should happen within app so it can be applied to any selected dataset
 pca_plot <- function(){
   df <- openxlsx::read.xlsx("../data/PXDtemplate_pca.xlsx",
                             rowNames = TRUE)
@@ -99,32 +142,3 @@ pca_plot <- function(){
             ellipse = TRUE)
 }
 
-bar_plot <- function(gene_dropdown, data){
-  df <- data
-  df.plot <- df |>
-    filter(gene.names == gene_dropdown) |>
-    mutate(experiment_type = str_extract(experiment, "[A-Z]+"))
-  p <- ggplot(data = df.plot, aes(x = experiment, y = expression)) 
-  p <- p + geom_bar(mapping = aes(x = experiment,
-                                  y = expression,
-                                  fill = experiment_type),
-                    stat = "identity",
-                    col = "black") +
-    xlab("") +
-    scale_y_continuous(name = "Normalized Log2-protein intensity") +
-    # ggtitle(paste("Template data set", plot.data$Gene.symbol[1], sep = ", ")) +
-    theme_light() +
-    theme(text = element_text(family = font_family),
-          axis.text.x = element_text(size = 10,
-                                   colour = "black",
-                                   family = font_family,
-                                   angle = 45),
-          axis.text.y = element_text(size = 10,
-                                     colour = "black",
-                                     family = font_family),
-          legend.text = element_text(size = 10, family = font_family),
-          legend.position = "none",
-          legend.box.just = "center") +
-    labs(NULL)
-  ggplotly(p)
-}

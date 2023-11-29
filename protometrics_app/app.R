@@ -50,10 +50,10 @@ ui <- fluidPage(
 
 server <- function(input, output, session) {
   thematic::thematic_shiny()
-  
+  # create heatmap
   ht <- function.heatmap()
   makeInteractiveComplexHeatmap(input, output, session, ht)
-
+  # create data object from selected dataset
   data <- reactive({
     req(input$dataset_file)
     read_excel(paste0('./data/',input$dataset_file, '.xlsx'))[,-1] |>
@@ -61,34 +61,34 @@ server <- function(input, output, session) {
                    names_to = "experiment", 
                    values_to = "expression")
   })
-
+  # create gene dropdown menu
   output$toCol <- renderUI({
     df <- data()
     items <- unique(df$gene.names)
     selectInput("gene_dropdown", "Gene:", items)
   })
-  
+  # create bar plot 
   output$plot_bar <- renderPlotly({
     req(input$gene_dropdown)
     bar_plot(input$gene_dropdown, data())
   })
-  
+  # create PCA plot
   output$PCA_plot <- renderPlot({
     #req(input&upload)
     pca_plot() # this is hard coded with template data at the moment
   })
-  
+  # create box plot
   output$plot_box <- renderPlotly({
     req(input$gene_dropdown)
     box_plot(input$gene_dropdown, data())
   })
-  
-  output$info <- renderPrint({
-    req(input$plot_click)
-    x <- round(input$plot_click$x, 2)
-    y <- round(input$plot_click$y, 2)
-    cat("[", x, ", ", y, "]", sep = "")
-  })
+  # 
+#  output$info <- renderPrint({
+ #   req(input$plot_click)
+  #  x <- round(input$plot_click$x, 2)
+   # y <- round(input$plot_click$y, 2)
+    #cat("[", x, ", ", y, "]", sep = "")
+#  })
 }
 
 shinyApp(ui, server)
