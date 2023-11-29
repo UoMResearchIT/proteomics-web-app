@@ -16,8 +16,11 @@ ui <- fluidPage(
   titlePanel('Lennon Lab Proteomic data archive'),
   div(style = "height:50px"),
   fluidRow(
-    column(6, 
-      fileInput("upload", label = 'Dataset')),
+    
+    column(6,
+           selectInput(inputId = 'dataset_file', label = 'Choose a dataset:',
+                       choices = gsub(pattern = "\\.xlsx$", "", list.files(path = "./data"))),
+    ),
     column(6,
       uiOutput("toCol")),
       ),
@@ -28,8 +31,7 @@ ui <- fluidPage(
                fluidRow(
                  column(6,
        plotlyOutput("plot_bar")
-       ),#, click = "plot_click", hover = 'plot_bar_hover'),
-      # verbatimTextOutput("info"),
+       ),
        column(6, plotlyOutput("plot_box"),
        ),
                ),
@@ -53,8 +55,8 @@ server <- function(input, output, session) {
   makeInteractiveComplexHeatmap(input, output, session, ht)
 
   data <- reactive({
-    req(input$upload)
-    read_excel(input$upload$datapath)[,-1] |>
+    req(input$dataset_file)
+    read_excel(paste0('./data/',input$dataset_file, '.xlsx'))[,-1] |>
       pivot_longer(cols = !(UniprotID:gene.names),
                    names_to = "experiment", 
                    values_to = "expression")
@@ -66,16 +68,6 @@ server <- function(input, output, session) {
     selectInput("gene_dropdown", "Gene:", items)
   })
   
-  # output$plot <- renderPlot({
-  #   req(input$gene_dropdown)
-  #   df <- data()
-  #   df |>
-  #     filter(gene.names == input$gene_dropdown) |>
-  #     mutate(experiment_type = str_extract(experiment, "[A-Z]+")) |>
-  #     ggplot(aes(x = experiment_type, y = expression)) +
-  #     geom_boxplot()
-  # }, res = 96)
-
   output$plot_bar <- renderPlotly({
     req(input$gene_dropdown)
     bar_plot(input$gene_dropdown, data())
@@ -90,7 +82,6 @@ server <- function(input, output, session) {
     req(input$gene_dropdown)
     box_plot(input$gene_dropdown, data())
   })
-  
   
   output$info <- renderPrint({
     req(input$plot_click)
