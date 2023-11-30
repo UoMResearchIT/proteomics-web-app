@@ -40,6 +40,10 @@ Contains the business logic of the app, code for making the plots.
 ### ./data
 Place all datasets here. They should be .xlsx files and follow the same format as the cell_prot_final and prot_final demo files. The name to be displayed in the dropdown menu of 'Choose a dataset' should be the same as the name of the file. 
 
+## How to deploy app on UoM Shiny Server
+
+https://github.com/UoMResearchIT/r-shinysender/#usage
+
 ## Ideas to make web site have a login feature
 - Add an authentication layer to your shiny apps https://paulc91.github.io/shinyauthr/
 
