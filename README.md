@@ -53,6 +53,9 @@ https://github.com/UoMResearchIT/r-shinysender/#usage
 
 This all needs discussion with WADS team. And consideration needs to be given to the security risks of storing database of user details. 
 
+## Idea to refactor code for more robust deployment
+https://engineering-shiny.org/index.html
+
 
 
 
