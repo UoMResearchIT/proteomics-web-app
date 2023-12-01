@@ -8,7 +8,7 @@ RSE Lead : Andrew Jerrison
 Academics : Mychel Morais and Rachel Lennon
 
 ## To run shiny app
-Open the Rproj in protometrics_app with RStudio
+Open the proteomics_app.Rproj file in Rstudio. Renv should bootstrap itself; you may need to run renv::restore() to install the required packages.
 
 Open app.R and use the 'Run App' button in the RStudio toolbar to launch the app.
 
