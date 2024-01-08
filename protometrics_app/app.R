@@ -63,9 +63,12 @@ server <- function(input, output, session) {
   })
   # create gene dropdown menu
   output$toCol <- renderUI({
-    df <- data()
-    items <- unique(df$gene.names)
-    selectInput("gene_dropdown", "Gene:", items)
+    selectizeInput("gene_dropdown", "Gene:", choices = NULL)
+  })
+  observe({
+    # Update the selectizeInput on the server side
+    items <- sort(unique(data()$gene.names))
+    updateSelectizeInput(session, "gene_dropdown", choices = items, server = TRUE)
   })
   # create bar plot 
   output$plot_bar <- renderPlotly({
