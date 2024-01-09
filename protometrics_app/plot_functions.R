@@ -1,22 +1,19 @@
-# settings
+#### Settings ####
 font_family <- 'Courier'
 
-# plotting scripts
+##### Plotting scripts ####
 
-# TAB1
-## box plot
-box_plot <- function(gene_dropdown, data){
-  #req(input$gene_dropdown)
-  df <- data
+#### TAB 1 ####
+box_plot <- function(gene_dropdown, df){
   df.plot <- df |>
     filter(gene.names == gene_dropdown) |>
     mutate(experiment_type = str_extract(experiment, "[A-Z]+"))
   p <- ggplot(data = df.plot, aes(x = experiment_type, y = expression)) 
-  p <- p + geom_boxplot(mapping = aes(x = experiment_type,
-                                      y = expression,
-                                      fill = experiment_type),
-                        col = "black") +
-    
+  p <- p +
+    geom_boxplot(mapping = aes(x = experiment_type,
+                               y = expression,
+                               fill = experiment_type),
+                 col = "black") +
     geom_point(mapping = aes(x = experiment_type,
                              y = expression),
                pch = 20, size = 1.5) +
@@ -25,8 +22,8 @@ box_plot <- function(gene_dropdown, data){
     theme_light() +
     theme(text = element_text(family = font_family),
           axis.text.x = element_text(size = 10,
-                                   colour = "black",
-                                   family = font_family),
+                                     colour = "black",
+                                     family = font_family),
           axis.text.y = element_text(size = 10,
                                      colour = "black",
                                      family = font_family),
@@ -34,18 +31,17 @@ box_plot <- function(gene_dropdown, data){
           legend.position = "right ")
   ggplotly(p)
 }
-## bar plot
-bar_plot <- function(gene_dropdown, data){
-  df <- data
+bar_plot <- function(gene_dropdown, df){
   df.plot <- df |>
     filter(gene.names == gene_dropdown) |>
     mutate(experiment_type = str_extract(experiment, "[A-Z]+"))
   p <- ggplot(data = df.plot, aes(x = experiment, y = expression)) 
-  p <- p + geom_bar(mapping = aes(x = experiment,
-                                  y = expression,
-                                  fill = experiment_type),
-                    stat = "identity",
-                    col = "black") +
+  p <- p +
+    geom_bar(mapping = aes(x = experiment,
+                           y = expression,
+                           fill = experiment_type),
+             stat = "identity",
+             col = "black") +
     xlab("") +
     scale_y_continuous(name = "Normalized Log2-protein intensity") +
     # ggtitle(paste("Template data set", plot.data$Gene.symbol[1], sep = ", ")) +
@@ -65,19 +61,36 @@ bar_plot <- function(gene_dropdown, data){
   ggplotly(p)
 }
 
-# TAB3
-## HeatMap
-### The data for this plot comes from ./proteomics-web-app/data/PXDtemplate_heatmap.xlsx
-### This data is preprocessed specifically to make a heatmap. 
-### TODO: Preprocessing of data should happen within app so it can be applied to any selected dataset
-function.heatmap <- function(){
-  # getting data needs to be reactive from a chosen dataset
-  matrix <- openxlsx::read.xlsx("../data/PXDtemplate_heatmap.xlsx",
-                                rowNames = TRUE)
+#### TAB 2 ####
+pca_plot <- function(df){
+  # create the group design
+  design <- data.frame("Samples" = seq(1:nrow(df)),
+                       "Group" = seq(1:nrow(df)))
+  design$Samples <- rownames(df)
+  design$Group <- gsub("_\\d+", "", design$Samples)
+
+  # Perform a PCA with pre-processed data
+  pca <- pca(X = df,
+             ncomp = nrow(df),
+             center = TRUE,
+             scale = TRUE)
+  # Create a 2D Sample Plot
+  plotIndiv(object = pca,
+            comp = c(1,2),
+            ind.names = FALSE,
+            group = design$Group,
+            title = "Template data set",
+            legend = TRUE,
+            cex = 0.8,
+            ellipse = TRUE)
+}
+
+#### TAB 3 ####
+function.heatmap <- function(matrix){
   x <- as.matrix(matrix)
   x.trunc <- as.vector(unique(x))
-  x.trim <- x.trunc[x.trunc>=quantile(x.trunc, probs = 0.01, na.rm = T) &
-                      x.trunc<=quantile(x.trunc, probs = 0.99, na.rm = T)]
+  x.trim <- x.trunc[x.trunc >= quantile(x.trunc, probs = 0.01, na.rm = T) &
+                      x.trunc <= quantile(x.trunc, probs = 0.99, na.rm = T)]
   x.max <- which.max(x.trim)
   x.min <- which.min(x.trim)
   # create a color function for the heatmap
@@ -109,36 +122,3 @@ function.heatmap <- function(){
                                                                    show_annotation_name = FALSE))
   return(ht)
 }
-
-# TAB2
-## PCA plot
-### The data for this plot comes from ./proteomics-web-app/data/PXDtemplate_pca.xlsx
-### This data is preprocessed specifically to make a heatmap. 
-### TODO: Preprocessing of data should happen within app so it can be applied to any selected dataset
-pca_plot <- function(){
-  df <- openxlsx::read.xlsx("../data/PXDtemplate_pca.xlsx",
-                            rowNames = TRUE)
-  # create the group design
-  design <- data.frame("Samples" = seq(1:nrow(df)),
-                       "Group" = seq(1:nrow(df)))
-  
-  design$Samples <- rownames(df)
-  design$Group <- gsub("_\\d+", "", design$Samples)
-  
-  # Perform a PCA with data pre-processed
-  pca <- pca(X = df,
-             ncomp = nrow(df),
-             center = TRUE,
-             scale = TRUE)
-  
-  # Create a 2D Sample Plot
-  plotIndiv(object = pca,
-            comp = c(1,2),
-            ind.names = FALSE,
-            group = design$Group,
-            title = "Template data set",
-            legend = TRUE,
-            cex = 0.8,
-            ellipse = TRUE)
-}
-

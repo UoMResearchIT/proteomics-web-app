@@ -37,7 +37,7 @@ ui <- fluidPage(
                  ),
                tableOutput("near_rows_data")
                ),
-      tabPanel('PCA', plotOutput('PCA_plot', width = "60%")),
+      tabPanel('PCA', plotOutput('PCA_plot', width = "80%")),
       tabPanel('HeatMap', InteractiveComplexHeatmapOutput()),
       tabPanel('Correlation','Plot ot be added'),
       )
@@ -56,6 +56,19 @@ server <- function(input, output, session) {
                    names_to = "experiment", 
                    values_to = "expression")
   })
+  # The histogram is currently using temporary fixed data. It is pre-processed
+  # specifically to make a heatmap.
+  # TODO: Pre-processing of data should happen within app so it can be applied
+  # to any selected dataset.
+  heatmap_data <- openxlsx::read.xlsx("./data/Heatmap/PXDtemplate_heatmap.xlsx",
+                                      sheet = 1, rowNames = TRUE)
+
+  # The pca plot is currently using temporary fixed data. It is pre-processed
+  # specifically to make the pca plot.
+  # TODO: Pre-processing of data should happen within app so it can be applied
+  # to any selected dataset.
+  pca_data <- openxlsx::read.xlsx("./data/PCA/PXDtemplate_pca.xlsx",
+                                  sheet = 1, rowNames = TRUE)
 
   #### Create gene drop-down menu ####
   output$GeneList <- renderUI({
@@ -81,21 +94,12 @@ server <- function(input, output, session) {
 
   #### create PCA plot ####
   output$PCA_plot <- renderPlot({
-    #req(input&upload)
-    pca_plot() # this is hard coded with template data at the moment
+    pca_plot(pca_data)
   })
 
   #### Create heatmap ####
-  ht <- function.heatmap() # this is hard coded with template data at the moment
+  ht <- function.heatmap(heatmap_data)
   makeInteractiveComplexHeatmap(input, output, session, ht)
-
-  ####  render Print ####
-#  output$info <- renderPrint({
- #   req(input$plot_click)
-  #  x <- round(input$plot_click$x, 2)
-   # y <- round(input$plot_click$y, 2)
-    #cat("[", x, ", ", y, "]", sep = "")
-#  })
 
 }
 
