@@ -51,6 +51,7 @@ server <- function(input, output, session) {
   thematic::thematic_shiny()
 
   #### Automatically get/write parameters from/to url ####
+  selected_gene <- reactiveVal("")
   bookmarkingParams <- c("dataset","gene")
   ExcludedIDs <- reactiveVal(value = NULL)
   observe({
@@ -60,6 +61,9 @@ server <- function(input, output, session) {
     session$doBookmark()
   })
   onBookmarked(updateQueryString)
+  onRestore(function(state){
+    selected_gene(state$input$gene)
+  })
 
   #### Create data object from selected dataset ####
   data <- reactive({
@@ -87,7 +91,19 @@ server <- function(input, output, session) {
   observe({
     # Update the gene list on the server side
     items <- sort(unique(data()$gene.names))
-    updateSelectizeInput(session, "gene", choices = items, server = TRUE)
+    if (!(selected_gene() %in% items)) {
+      if(!(selected_gene() == "")){
+        showNotification(
+          paste("Gene:", selected_gene(), "not available in",input$dataset,"dataset."),
+          type = "warning", duration = 5
+        )
+      }
+      selected_gene(items[1])
+    }
+    updateSelectizeInput(session, "gene",
+                         choices = items,
+                         selected = selected_gene(),
+                         server = TRUE)
   })
 
   #### Create bar plot ####
