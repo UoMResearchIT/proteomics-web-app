@@ -17,7 +17,7 @@ ui <- fluidPage(
   div(style = "height:50px"),
   fluidRow(
     column(6,
-           selectInput(inputId = 'dataset_file',
+           selectInput(inputId = 'dataset',
                        label = 'Choose a dataset:',
                        choices = gsub(pattern = "\\.xlsx$",
                                       "",
@@ -25,7 +25,7 @@ ui <- fluidPage(
                                       )
                        ),
            ),
-    column(6, uiOutput("GeneList")),
+    column(6, selectizeInput("gene", "Gene:", choices = NULL)),
     ),
 
   fluidRow(
@@ -50,8 +50,8 @@ server <- function(input, output, session) {
 
   #### Create data object from selected dataset ####
   data <- reactive({
-    req(input$dataset_file)
-    read_excel(paste0('./data/',input$dataset_file, '.xlsx'))[,-1] |>
+    req(input$dataset)
+    read_excel(paste0('./data/',input$dataset, '.xlsx'))[,-1] |>
       pivot_longer(cols = !(UniprotID:gene.names),
                    names_to = "experiment", 
                    values_to = "expression")
@@ -71,25 +71,22 @@ server <- function(input, output, session) {
                                   sheet = 1, rowNames = TRUE)
 
   #### Create gene drop-down menu ####
-  output$GeneList <- renderUI({
-    selectizeInput("gene_dropdown", "Gene:", choices = NULL)
-  })
   observe({
-    # Update the selectizeInput on the server side
+    # Update the gene list on the server side
     items <- sort(unique(data()$gene.names))
-    updateSelectizeInput(session, "gene_dropdown", choices = items, server = TRUE)
+    updateSelectizeInput(session, "gene", choices = items, server = TRUE)
   })
 
   #### Create bar plot ####
   output$plot_bar <- renderPlotly({
-    req(input$gene_dropdown)
-    bar_plot(input$gene_dropdown, data())
+    req(input$gene)
+    bar_plot(input$gene, data())
   })
 
   #### Create box plot ####
   output$plot_box <- renderPlotly({
-    req(input$gene_dropdown)
-    box_plot(input$gene_dropdown, data())
+    req(input$gene)
+    box_plot(input$gene, data())
   })
 
   #### create PCA plot ####
