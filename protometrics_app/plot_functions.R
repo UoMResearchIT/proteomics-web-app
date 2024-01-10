@@ -4,36 +4,6 @@ font_family <- 'Courier'
 ##### Plotting scripts ####
 
 #### TAB 1 ####
-box_plot <- function(gene_dropdown, df){
-  if (!(gene_dropdown %in% df$gene.names)) {
-    return()
-  }
-  df.plot <- df |>
-    filter(gene.names == gene_dropdown) |>
-    mutate(experiment_type = str_extract(experiment, "[A-Z]+"))
-  p <- ggplot(data = df.plot, aes(x = experiment_type, y = expression)) 
-  p <- p +
-    geom_boxplot(mapping = aes(x = experiment_type,
-                               y = expression,
-                               fill = experiment_type),
-                 col = "black") +
-    geom_point(mapping = aes(x = experiment_type,
-                             y = expression),
-               pch = 20, size = 1.5) +
-    xlab("") +
-    scale_y_continuous(name = "Normalized Log2-protein intensity") +
-    theme_light() +
-    theme(text = element_text(family = font_family),
-          axis.text.x = element_text(size = 10,
-                                     colour = "black",
-                                     family = font_family),
-          axis.text.y = element_text(size = 10,
-                                     colour = "black",
-                                     family = font_family),
-          legend.text = element_text(size = 10, family = font_family),
-          legend.position = "right ")
-  ggplotly(p)
-}
 bar_plot <- function(gene_dropdown, df){
   ## TODO: Sort out Warning: Removed x rows containing missing values
   if (!(gene_dropdown %in% df$gene.names)) {
@@ -65,6 +35,36 @@ bar_plot <- function(gene_dropdown, df){
           legend.position = "none",
           legend.box.just = "center") +
     labs(NULL)
+  ggplotly(p)
+}
+box_plot <- function(gene_dropdown, df){
+  if (!(gene_dropdown %in% df$gene.names)) {
+    return()
+  }
+  df.plot <- df |>
+    filter(gene.names == gene_dropdown) |>
+    mutate(experiment_type = str_extract(experiment, "[A-Z]+"))
+  p <- ggplot(data = df.plot, aes(x = experiment_type, y = expression)) 
+  p <- p +
+    geom_boxplot(mapping = aes(x = experiment_type,
+                               y = expression,
+                               fill = experiment_type),
+                 col = "black") +
+    geom_point(mapping = aes(x = experiment_type,
+                             y = expression),
+               pch = 20, size = 1.5) +
+    xlab("") +
+    scale_y_continuous(name = "Normalized Log2-protein intensity") +
+    theme_light() +
+    theme(text = element_text(family = font_family),
+          axis.text.x = element_text(size = 10,
+                                     colour = "black",
+                                     family = font_family),
+          axis.text.y = element_text(size = 10,
+                                     colour = "black",
+                                     family = font_family),
+          legend.text = element_text(size = 10, family = font_family),
+          legend.position = "right ")
   ggplotly(p)
 }
 
