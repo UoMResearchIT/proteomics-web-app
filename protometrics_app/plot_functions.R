@@ -5,6 +5,9 @@ font_family <- 'Courier'
 
 #### TAB 1 ####
 box_plot <- function(gene_dropdown, df){
+  if (!(gene_dropdown %in% df$gene.names)) {
+    return()
+  }
   df.plot <- df |>
     filter(gene.names == gene_dropdown) |>
     mutate(experiment_type = str_extract(experiment, "[A-Z]+"))
@@ -32,6 +35,10 @@ box_plot <- function(gene_dropdown, df){
   ggplotly(p)
 }
 bar_plot <- function(gene_dropdown, df){
+  ## TODO: Sort out Warning: Removed x rows containing missing values
+  if (!(gene_dropdown %in% df$gene.names)) {
+    return()
+  }
   df.plot <- df |>
     filter(gene.names == gene_dropdown) |>
     mutate(experiment_type = str_extract(experiment, "[A-Z]+"))
