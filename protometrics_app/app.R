@@ -10,7 +10,8 @@ library(mixOmics)
 source("plot_functions.R")
 
 #### Front end ####
-ui <- fluidPage(
+ui <- function(request) {
+  fluidPage(
   theme = bslib::bs_theme(bootswatch = "flatly"),
   div(style = "height:50px"),
   titlePanel('Lennon Lab Proteomic data archive'),
@@ -43,10 +44,22 @@ ui <- fluidPage(
       )
     ),
   )
+}
 
 #### Back end ####
 server <- function(input, output, session) {
   thematic::thematic_shiny()
+
+  #### Automatically get/write parameters from/to url ####
+  bookmarkingParams <- c("dataset","gene")
+  ExcludedIDs <- reactiveVal(value = NULL)
+  observe({
+    toExclude <- setdiff(names(input), bookmarkingParams)
+    setBookmarkExclude(toExclude)
+    ExcludedIDs(toExclude)
+    session$doBookmark()
+  })
+  onBookmarked(updateQueryString)
 
   #### Create data object from selected dataset ####
   data <- reactive({
@@ -101,4 +114,5 @@ server <- function(input, output, session) {
 }
 
 #### Serve ####
+enableBookmarking(store = "url")
 shinyApp(ui, server)
