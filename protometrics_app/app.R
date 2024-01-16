@@ -22,7 +22,9 @@ ui <- function(request) {
                        label = 'Choose a dataset:',
                        choices = gsub(pattern = "\\.xlsx$",
                                       "",
-                                      list.files(path = "./data"),
+                                      list.files(path = "./data",
+                                                 pattern = "\\.xlsx$",
+                                                 full.names = FALSE),
                                       )
                        ),
            ),
