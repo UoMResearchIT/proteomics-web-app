@@ -33,6 +33,7 @@ ui <- function(request) {
 
   fluidRow(
     tabsetPanel(
+      id = "tab",
       tabPanel('BoxPlot', 
                fluidRow(
                  column(6, plotlyOutput("plot_bar")),
@@ -54,7 +55,7 @@ server <- function(input, output, session) {
 
   #### Automatically get/write parameters from/to url ####
   selected_gene <- reactiveVal("")
-  bookmarkingParams <- c("dataset","gene")
+  bookmarkingParams <- c("dataset","gene","tab")
   ExcludedIDs <- reactiveVal(value = NULL)
   observe({
     toExclude <- setdiff(names(input), bookmarkingParams)
