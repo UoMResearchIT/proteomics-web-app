@@ -70,10 +70,20 @@ server <- function(input, output, session) {
   #### Create data object from selected dataset ####
   data <- reactive({
     req(input$dataset)
-    read_excel(paste0('./data/',input$dataset, '.xlsx'))[,-1] |>
-      pivot_longer(cols = !(UniprotID:gene.names),
-                   names_to = "experiment", 
-                   values_to = "expression")
+    excel_ok <- tryCatch({
+      read_excel(paste0('./data/',input$dataset, '.xlsx'))[,-1] |>
+        pivot_longer(cols = !(UniprotID:gene.names),
+                     names_to = "experiment",
+                     values_to = "expression")
+    }, error = function(e) {
+      message("Error reading the Excel file:", conditionMessage(e))
+      showNotification(
+        "Error reading the selected dataset.",
+        type = "error", duration = 10
+      )
+      return(tibble(gene.names = ""))
+    })
+    return(excel_ok)
   })
   # The histogram is currently using temporary fixed data. It is pre-processed
   # specifically to make a heatmap.
