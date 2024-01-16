@@ -22,7 +22,7 @@ ui <- function(request) {
                        label = 'Choose a dataset:',
                        choices = gsub(pattern = "\\.xlsx$",
                                       "",
-                                      list.files(path = "./data",
+                                      list.files(path = "../data",
                                                  pattern = "\\.xlsx$",
                                                  full.names = FALSE),
                                       )
@@ -71,7 +71,7 @@ server <- function(input, output, session) {
   data <- reactive({
     req(input$dataset)
     excel_ok <- tryCatch({
-      read_excel(paste0('./data/',input$dataset, '.xlsx'))[,-1] |>
+      read_excel(paste0('../data/',input$dataset, '.xlsx'))[,-1] |>
         pivot_longer(cols = !(UniprotID:gene.names),
                      names_to = "experiment",
                      values_to = "expression")
@@ -89,14 +89,14 @@ server <- function(input, output, session) {
   # specifically to make a heatmap.
   # TODO: Pre-processing of data should happen within app so it can be applied
   # to any selected dataset.
-  heatmap_data <- openxlsx::read.xlsx("./data/Heatmap/PXDtemplate_heatmap.xlsx",
+  heatmap_data <- openxlsx::read.xlsx("../data/Heatmap/PXDtemplate_heatmap.xlsx",
                                       sheet = 1, rowNames = TRUE)
 
   # The pca plot is currently using temporary fixed data. It is pre-processed
   # specifically to make the pca plot.
   # TODO: Pre-processing of data should happen within app so it can be applied
   # to any selected dataset.
-  pca_data <- openxlsx::read.xlsx("./data/PCA/PXDtemplate_pca.xlsx",
+  pca_data <- openxlsx::read.xlsx("../data/PCA/PXDtemplate_pca.xlsx",
                                   sheet = 1, rowNames = TRUE)
 
   #### Create gene drop-down menu ####
