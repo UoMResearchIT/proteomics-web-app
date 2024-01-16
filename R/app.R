@@ -55,17 +55,23 @@ server <- function(input, output, session) {
 
   #### Automatically get/write parameters from/to url ####
   selected_gene <- reactiveVal("")
+  default_gene <- reactiveVal("")
   bookmarkingParams <- c("dataset","gene","tab")
   ExcludedIDs <- reactiveVal(value = NULL)
   observe({
     toExclude <- setdiff(names(input), bookmarkingParams)
+    # Exclude default params
+    if (input$tab == "BoxPlot") { toExclude <- union(toExclude, "tab") }
+    if (input$gene == default_gene()) {toExclude <- union(toExclude, "gene")}
     setBookmarkExclude(toExclude)
     ExcludedIDs(toExclude)
     session$doBookmark()
   })
   onBookmarked(updateQueryString)
   onRestore(function(state){
-    selected_gene(state$input$gene)
+    if (!is.null(state$input$gene)) {
+      selected_gene(state$input$gene)
+    }
   })
 
   #### Create data object from selected dataset ####
@@ -117,6 +123,7 @@ server <- function(input, output, session) {
                          choices = items,
                          selected = selected_gene(),
                          server = TRUE)
+    default_gene(items[1])
   })
 
   #### Create bar plot ####
