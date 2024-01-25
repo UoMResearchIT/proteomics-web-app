@@ -47,6 +47,8 @@ ui <- function(request) {
                fluidRow(
                  tabsetPanel(
                    id = "tab",
+                   tabPanel('PCA', plotOutput('PCA_plot', width = "80%")),
+                   tabPanel('HeatMap', InteractiveComplexHeatmapOutput()),
                    tabPanel('BoxPlot',
                             fluidRow(
                               column(6, plotlyOutput("plot_bar")),
@@ -54,9 +56,7 @@ ui <- function(request) {
                             ),
                             tableOutput("near_rows_data")
                    ),
-                   tabPanel('PCA', plotOutput('PCA_plot', width = "80%")),
-                   tabPanel('HeatMap', InteractiveComplexHeatmapOutput()),
-                   tabPanel('Correlation','Plot ot be added'),
+                   tabPanel('About the dataset','Info here'),
                  )
                ),
       ),
@@ -78,13 +78,14 @@ server <- function(input, output, session) {
   #### Automatically get/write parameters from/to url ####
   selected_gene <- reactiveVal("")
   default_gene <- reactiveVal("")
+  default_tab <- "PCA"
   observe({
     # Only set bookmarking non-default parameters
     if (input$view == "home") { bookmarkingParams <- c() }
     else { bookmarkingParams <- c("view") }
     if (input$view == "data") {
       bookmarkingParams <- union(bookmarkingParams, c("dataset","gene","tab"))
-      if (input$tab == "BoxPlot") {
+      if (input$tab == default_tab) {
         bookmarkingParams <- setdiff(bookmarkingParams, "tab")
       }
       if (input$gene == default_gene()) {
