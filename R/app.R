@@ -42,7 +42,13 @@ ui <- function(request) {
                           )
                         ),
                  ),
-                 column(6, selectizeInput("gene", "Gene:", choices = NULL)),
+                 column(6,
+                        # Only show gene dropdown if selected tab is BoxPlot
+                        conditionalPanel(
+                          condition = "input.tab == 'BoxPlot'",
+                          selectizeInput("gene", "Gene:", choices = NULL)
+                        )
+                 )
                ),
                fluidRow(
                  tabsetPanel(
@@ -88,7 +94,7 @@ server <- function(input, output, session) {
       if (input$tab == default_tab) {
         bookmarkingParams <- setdiff(bookmarkingParams, "tab")
       }
-      if (input$gene == default_gene()) {
+      if ((input$tab != "BoxPlot") || (input$gene == default_gene())) {
         bookmarkingParams <- setdiff(bookmarkingParams, "gene")
       }
     }
@@ -140,7 +146,7 @@ server <- function(input, output, session) {
     # Update the gene list on the server side
     items <- sort(unique(data()$gene.names))
     if (!(selected_gene() %in% items)) {
-      if(!(selected_gene() == "")){
+      if (!(selected_gene() == "") && (input$tab == "BoxPlot")) {
         showNotification(
           paste("Gene:", selected_gene(), "not available in",input$dataset,"dataset."),
           type = "warning", duration = 5
