@@ -78,7 +78,6 @@ server <- function(input, output, session) {
   #### Automatically get/write parameters from/to url ####
   selected_gene <- reactiveVal("")
   default_gene <- reactiveVal("")
-  ExcludedIDs <- reactiveVal(value = NULL)
   observe({
     # Only set bookmarking non-default parameters
     if (input$view == "home") { bookmarkingParams <- c() }
@@ -94,7 +93,6 @@ server <- function(input, output, session) {
     }
     toExclude <- setdiff(names(input), bookmarkingParams)
     setBookmarkExclude(toExclude)
-    ExcludedIDs(toExclude)
     session$doBookmark()
   })
   onBookmarked(updateQueryString)
