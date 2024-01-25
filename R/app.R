@@ -12,40 +12,62 @@ source("plot_functions.R")
 #### Front end ####
 ui <- function(request) {
   fluidPage(
-  theme = bslib::bs_theme(bootswatch = "flatly"),
-  div(style = "height:50px"),
-  titlePanel('Lennon Lab Proteomic data archive'),
-  div(style = "height:50px"),
-  fluidRow(
-    column(6,
-           selectInput(inputId = 'dataset',
-                       label = 'Choose a dataset:',
-                       choices = gsub(pattern = "\\.xlsx$",
-                                      "",
-                                      list.files(path = "../data",
-                                                 pattern = "\\.xlsx$",
-                                                 full.names = FALSE),
-                                      )
-                       ),
-           ),
-    column(6, selectizeInput("gene", "Gene:", choices = NULL)),
-    ),
-
-  fluidRow(
-    tabsetPanel(
-      id = "tab",
-      tabPanel('BoxPlot', 
+    navbarPage(
+      id = "view",
+      title = "proteinBASE",
+      theme = bslib::bs_theme(bootswatch = "flatly"),
+      tabPanel("Home",
+               value = "home",
+               h1('About proteinBASE'),
+               p(
+                 "Lennon Lab Proteomic data archive ... Some info here"
+               )
+      ),
+      tabPanel("Data Visualization Tool",
+               value = "data",
+               div(style = "height:50px"),
                fluidRow(
-                 column(6, plotlyOutput("plot_bar")),
-                 column(6, plotlyOutput("plot_box")),
+                 column(6,
+                        selectInput(
+                          inputId = 'dataset',
+                          label = 'Choose a dataset:',
+                          choices = gsub(
+                            pattern = "\\.xlsx$",
+                            "",
+                            list.files(
+                              path = "../data",
+                              pattern = "\\.xlsx$",
+                              full.names = FALSE
+                            ),
+                          )
+                        ),
                  ),
-               tableOutput("near_rows_data")
+                 column(6, selectizeInput("gene", "Gene:", choices = NULL)),
                ),
-      tabPanel('PCA', plotOutput('PCA_plot', width = "80%")),
-      tabPanel('HeatMap', InteractiveComplexHeatmapOutput()),
-      tabPanel('Correlation','Plot ot be added'),
+               fluidRow(
+                 tabsetPanel(
+                   id = "tab",
+                   tabPanel('BoxPlot',
+                            fluidRow(
+                              column(6, plotlyOutput("plot_bar")),
+                              column(6, plotlyOutput("plot_box")),
+                            ),
+                            tableOutput("near_rows_data")
+                   ),
+                   tabPanel('PCA', plotOutput('PCA_plot', width = "80%")),
+                   tabPanel('HeatMap', InteractiveComplexHeatmapOutput()),
+                   tabPanel('Correlation','Plot ot be added'),
+                 )
+               ),
+      ),
+      tabPanel("Contact",
+               value = "contact",
+               h1('Contact'),
+               p(
+                 "Contact info here"
+               )
       )
-    ),
+    )
   )
 }
 
@@ -56,13 +78,21 @@ server <- function(input, output, session) {
   #### Automatically get/write parameters from/to url ####
   selected_gene <- reactiveVal("")
   default_gene <- reactiveVal("")
-  bookmarkingParams <- c("dataset","gene","tab")
   ExcludedIDs <- reactiveVal(value = NULL)
   observe({
+    # Only set bookmarking non-default parameters
+    if (input$view == "home") { bookmarkingParams <- c() }
+    else { bookmarkingParams <- c("view") }
+    if (input$view == "data") {
+      bookmarkingParams <- union(bookmarkingParams, c("dataset","gene","tab"))
+      if (input$tab == "BoxPlot") {
+        bookmarkingParams <- setdiff(bookmarkingParams, "tab")
+      }
+      if (input$gene == default_gene()) {
+        bookmarkingParams <- setdiff(bookmarkingParams, "gene")
+      }
+    }
     toExclude <- setdiff(names(input), bookmarkingParams)
-    # Exclude default params
-    if (input$tab == "BoxPlot") { toExclude <- union(toExclude, "tab") }
-    if (input$gene == default_gene()) {toExclude <- union(toExclude, "gene")}
     setBookmarkExclude(toExclude)
     ExcludedIDs(toExclude)
     session$doBookmark()
