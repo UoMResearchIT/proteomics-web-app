@@ -90,6 +90,9 @@ pca_plot <- function(df){
             group = design$Group,
             title = "Template data set",
             legend = TRUE,
+            size.xlabel = rel(1.3),
+            size.ylabel = rel(1.3),
+            size.legend = rel(1.3),
             cex = 0.8,
             ellipse = TRUE)
 }

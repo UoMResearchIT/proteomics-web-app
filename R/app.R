@@ -53,8 +53,12 @@ ui <- function(request) {
                fluidRow(
                  tabsetPanel(
                    id = "tab",
-                   tabPanel('PCA', plotOutput('PCA_plot', width = "80%")),
-                   tabPanel('HeatMap', InteractiveComplexHeatmapOutput()),
+                   tabPanel('PCA',
+                            plotOutput('PCA_plot', width = 600, height = 450)
+                   ),
+                   tabPanel('HeatMap',
+                            InteractiveComplexHeatmapOutput()
+                   ),
                    tabPanel('BoxPlot',
                             fluidRow(
                               column(6, plotlyOutput("plot_bar")),
@@ -62,7 +66,9 @@ ui <- function(request) {
                             ),
                             tableOutput("near_rows_data")
                    ),
-                   tabPanel('About the dataset','Info here'),
+                   tabPanel('About the dataset',
+                            'Info here'
+                   ),
                  )
                ),
       ),
