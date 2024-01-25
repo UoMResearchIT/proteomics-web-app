@@ -18,10 +18,7 @@ ui <- function(request) {
       theme = bslib::bs_theme(bootswatch = "flatly"),
       tabPanel("Home",
                value = "home",
-               h1('About proteinBASE'),
-               p(
-                 "Lennon Lab Proteomic data archive ... Some info here"
-               )
+               includeHTML("../HTML/home.html")
       ),
       tabPanel("Data Visualization Tool",
                value = "data",
@@ -74,10 +71,7 @@ ui <- function(request) {
       ),
       tabPanel("Contact",
                value = "contact",
-               h1('Contact'),
-               p(
-                 "Contact info here"
-               )
+               includeHTML("../HTML/contact.html")
       )
     )
   )
