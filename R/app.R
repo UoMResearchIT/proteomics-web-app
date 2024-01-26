@@ -6,6 +6,7 @@ library(plotly)
 library(InteractiveComplexHeatmap)
 library(ComplexHeatmap)
 library(mixOmics)
+library(markdown)
 
 source("plot_functions.R")
 
@@ -18,7 +19,7 @@ ui <- function(request) {
       theme = bslib::bs_theme(bootswatch = "flatly"),
       tabPanel("Home",
                value = "home",
-               includeHTML("../HTML/home.html")
+               div(includeMarkdown("../inst/home.md"))
       ),
       tabPanel("Data Visualization Tool",
                value = "data",
@@ -71,7 +72,7 @@ ui <- function(request) {
       ),
       tabPanel("Contact",
                value = "contact",
-               includeHTML("../HTML/contact.html")
+               div(includeMarkdown("../inst/contact.md"))
       )
     )
   )
