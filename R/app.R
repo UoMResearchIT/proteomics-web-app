@@ -52,7 +52,8 @@ ui <- function(request) {
                  tabsetPanel(
                    id = "tab",
                    tabPanel('PCA',
-                            plotOutput('PCA_plot', width = 600, height = 450)
+                            plotOutput('PCA_plot', width = 600, height = 450),
+                            downloadButton('download_pca'),
                    ),
                    tabPanel('HeatMap',
                             InteractiveComplexHeatmapOutput()
@@ -162,6 +163,14 @@ server <- function(input, output, session) {
     default_gene(items[1])
   })
 
+  #### create PCA plot ####
+  .pca_plot <- reactive(pca_plot(pca_data))
+  output$PCA_plot <- renderPlot(.pca_plot())
+
+  #### Create heatmap ####
+  ht <- function.heatmap(heatmap_data)
+  makeInteractiveComplexHeatmap(input, output, session, ht)
+
   #### Create bar plot ####
   output$plot_bar <- renderPlotly({
     req(input$gene)
@@ -174,14 +183,17 @@ server <- function(input, output, session) {
     box_plot(input$gene, data())
   })
 
-  #### create PCA plot ####
-  output$PCA_plot <- renderPlot({
-    pca_plot(pca_data)
-  })
-
-  #### Create heatmap ####
-  ht <- function.heatmap(heatmap_data)
-  makeInteractiveComplexHeatmap(input, output, session, ht)
+  #### Download buttons ####
+  output$download_pca <- downloadHandler(
+    filename = function() {
+      paste(input$dataset,"_PCA_plot.png")
+    },
+    content = function(file) {
+      png(file, width = 600, height = 450, units = "px")
+      plot(.pca_plot()$graph)
+      dev.off()
+    }
+  )
 
 }
 
