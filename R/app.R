@@ -10,6 +10,7 @@ library(mixOmics)
 library(markdown)
 
 source("plot_functions.R")
+source("save_as_button.R")
 
 #### Front end ####
 ui <- function(request) {
@@ -55,70 +56,7 @@ ui <- function(request) {
                    id = "tab",
                    tabPanel('PCA',
                             plotOutput('PCA_plot', width = 600, height = 450),
-
-                            #### Download Button ####
-                            actionButton(
-                              "pca_save_as_button",
-                              label = HTML( '<i class="fa fa-images"></i> Save as...'),
-                              tooltip = "Save image as...",
-                              class = "save-as",
-                              style = "
-                                color: #2D2;
-                                background-color: #EFE;
-                                border-color: #ddd;
-                                padding: 5px 20px",
-                            ),
-                            div(
-                              class = "row",
-                              id = "pca_save_as_options",
-                              style = "
-                                background-color: #EFE;
-                                border: 1px solid #ddd;
-                                border-radius: 5px;
-                                padding: 10px;
-                                width: 650px;
-                                margin-left: 0px;
-                                margin-bottom: 20px;
-                                display: none;
-                              ",
-                              column(3,
-                                     style = "display: flex;
-                                       align-items: center;
-                                       justify-content: center;",
-                                     downloadButton(
-                                       'download_pca',
-                                       "Save image",
-                                       class = "btn-info",
-                                       style = "padding: 20px 10px;"
-                                     )
-                              ),
-                              column(4,
-                                     radioButtons(
-                                       "pca_download_format",
-                                       label = "Format:",
-                                       choices = list("png",
-                                                      "pdf",
-                                                      "svg"),
-                                       selected = "png",
-                                       inline = TRUE
-                                     )
-                              ),
-                              column(2,
-                                     numericInput(
-                                       "pca_download_image_width",
-                                       label = "Width [px]",
-                                       value = 600
-                                     )
-                              ),
-                              column(2,
-                                     numericInput(
-                                       "pca_download_image_height",
-                                       label = "Height [px]",
-                                       value = 450
-                                     )
-                              ),
-                            ),
-                            #### End Download Button ####
+                            save_as_UI("pca_save_as")
                    ),
                    tabPanel('HeatMap',
                             InteractiveComplexHeatmapOutput()
@@ -249,31 +187,7 @@ server <- function(input, output, session) {
   })
 
   #### Download buttons ####
-  observeEvent(input$pca_save_as_button, {
-    shinyjs::toggle("pca_save_as_options")
-    shinyjs::runjs("window.scrollTo(0,document.body.scrollHeight);")
-  })
-  output$download_pca <- downloadHandler(
-    filename = function() {
-      paste(input$dataset,"_PCA_plot.",input$pca_download_format,sep = "")
-    },
-    content = function(file) {
-      w = input$pca_download_image_width
-      h = input$pca_download_image_height
-      format = input$pca_download_format
-      if (format == "png") {
-        png(file, width = w, height = h, units = "px")
-      } else if (format == "pdf") {
-        pdf(file, width = w, height = h)
-        #PLOT IS INCMPLETE!!!
-      } else if (format == "svg") {
-        svg(file, width = w, height = h)
-        #PLOT IS INCMPLETE!!!
-      }
-      plot(.pca_plot()$graph)
-      dev.off()
-    }
-  )
+  save_as_Server("pca_save_as", input$dataset, .pca_plot(), "PCA")
 
 }
 
