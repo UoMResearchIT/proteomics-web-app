@@ -36,7 +36,7 @@ bar_plot <- function(gene_dropdown, df){
           legend.position = "none",
           legend.box.just = "center") +
     labs(NULL)
-  ggplotly(p)
+  return(p)
 }
 box_plot <- function(gene_dropdown, df){
   if (!(gene_dropdown %in% df$gene.names)) {
@@ -67,7 +67,7 @@ box_plot <- function(gene_dropdown, df){
                                      family = font_family),
           legend.text = element_text(size = 10, family = font_family),
           legend.position = "right ")
-  ggplotly(p)
+  return(p)
 }
 
 #### TAB 2 ####
@@ -84,7 +84,7 @@ pca_plot <- function(df){
              center = TRUE,
              scale = TRUE)
   # Create a 2D Sample Plot
-  plotIndiv(object = pca,
+  p <- plotIndiv(object = pca,
             comp = c(1,2),
             ind.names = FALSE,
             group = design$Group,
@@ -95,6 +95,7 @@ pca_plot <- function(df){
             size.legend = rel(1.3),
             cex = 0.8,
             ellipse = TRUE)
+  return(p$graph)
 }
 
 #### TAB 3 ####

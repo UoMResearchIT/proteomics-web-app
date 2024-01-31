@@ -94,7 +94,7 @@ save_as_Server <- function(id,dataset_name = NULL, plot = NULL, plot_tag = NULL)
           svg(file, width = w, height = h)
           #PLOT IS INCMPLETE!!!
         }
-        plot(plot$graph)
+        print(plot)
         dev.off()
       }
     )

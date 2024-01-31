@@ -63,8 +63,14 @@ ui <- function(request) {
                    ),
                    tabPanel('BoxPlot',
                             fluidRow(
-                              column(6, plotlyOutput("plot_bar")),
-                              column(6, plotlyOutput("plot_box")),
+                              column(6,
+                                     plotlyOutput("plot_bar"),
+                                     save_as_UI("bar_save_as")
+                              ),
+                              column(6,
+                                     plotlyOutput("plot_box"),
+                                     save_as_UI("box_save_as")
+                              ),
                             ),
                             tableOutput("near_rows_data")
                    ),
@@ -167,7 +173,9 @@ server <- function(input, output, session) {
   })
 
   #### create PCA plot ####
-  .pca_plot <- reactive(pca_plot(pca_data))
+  .pca_plot <- reactive(
+    return(pca_plot(pca_data))
+  )
   output$PCA_plot <- renderPlot(.pca_plot())
 
   #### Create heatmap ####
@@ -175,19 +183,23 @@ server <- function(input, output, session) {
   makeInteractiveComplexHeatmap(input, output, session, ht)
 
   #### Create bar plot ####
-  output$plot_bar <- renderPlotly({
+  .bar_plot <- reactive({
     req(input$gene)
-    bar_plot(input$gene, data())
+    return(bar_plot(input$gene, data()))
   })
+  output$plot_bar <- renderPlotly(.bar_plot())
 
   #### Create box plot ####
-  output$plot_box <- renderPlotly({
+  .box_plot <- reactive({
     req(input$gene)
-    box_plot(input$gene, data())
+    return(box_plot(input$gene, data()))
   })
+  output$plot_box <- renderPlotly(.box_plot())
 
   #### Download buttons ####
   save_as_Server("pca_save_as", input$dataset, .pca_plot(), "PCA")
+  save_as_Server("bar_save_as", input$dataset, .bar_plot(), "Bar")
+  save_as_Server("box_save_as", input$dataset, .box_plot(), "Box")
 
 }
 
