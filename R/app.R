@@ -56,7 +56,7 @@ ui <- function(request) {
                    id = "tab",
                    tabPanel('PCA',
                             plotOutput('PCA_plot', width = 600, height = 450),
-                            save_as_UI("pca_save_as")
+                            save_as_UI("pca_save_as", 600, 450)
                    ),
                    tabPanel('HeatMap',
                             InteractiveComplexHeatmapOutput()
@@ -65,11 +65,11 @@ ui <- function(request) {
                             fluidRow(
                               column(6,
                                      plotlyOutput("plot_bar"),
-                                     save_as_UI("bar_save_as")
+                                     save_as_UI("bar_save_as", 500, 400)
                               ),
                               column(6,
                                      plotlyOutput("plot_box"),
-                                     save_as_UI("box_save_as")
+                                     save_as_UI("box_save_as", 500, 400)
                               ),
                             ),
                             tableOutput("near_rows_data")

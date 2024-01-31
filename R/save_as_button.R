@@ -1,4 +1,4 @@
-save_as_UI <- function(id) {
+save_as_UI <- function(id,  default_width = 600, default_height = 450) {
   tagList(
     #### Download Button ####
     actionButton(
@@ -52,21 +52,21 @@ save_as_UI <- function(id) {
              numericInput(
                NS(id,"download_image_width"),
                label = "Width [px]",
-               value = 600
+               value = default_width
              )
       ),
       column(2,
              numericInput(
                NS(id,"download_image_height"),
                label = "Height [px]",
-               value = 450
+               value = default_height
              )
       ),
     ),
   )
 }
 
-save_as_Server <- function(id,dataset_name = NULL, plot = NULL, plot_tag = NULL) {
+save_as_Server <- function(id, dataset_name = NULL, plot = NULL, plot_tag = NULL) {
   moduleServer(id, function(input, output, session) {
     observeEvent(input$save_as_button, {
       # Toggle this "save_as_options"
@@ -89,12 +89,17 @@ save_as_Server <- function(id,dataset_name = NULL, plot = NULL, plot_tag = NULL)
           png(file, width = w, height = h, units = "px")
         } else if (format == "pdf") {
           pdf(file, width = w, height = h)
-          #PLOT IS INCMPLETE!!!
         } else if (format == "svg") {
           svg(file, width = w, height = h)
-          #PLOT IS INCMPLETE!!!
         }
-        print(plot)
+        ggsave(
+          filename = file,
+          plot = plot,
+          dpi = "screen",
+          units = "px",
+          width = w,
+          height = h,
+          device = format)
         dev.off()
       }
     )
