@@ -17,8 +17,16 @@ ui <- function(request) {
   fluidPage(
     useShinyjs(),
     tags$head(
-      #hide modbar from plotly plots (PCA and BoxPlot)
-      tags$style(HTML(".modebar {display: none !important;}")),
+      # Hide modbar from plotly plots (PCA and BoxPlot)
+      # Hide the control bar from heatmap and sub-heatmap
+      # Hide the output wrapper from heatmap and sub-heatmap
+      tags$style(HTML(
+        "
+        .modebar {display: none !important;}
+        [id*='heatmap_control'] {display: none !important;}
+        [id*='output_wrapper'] {display: none !important;}
+        "
+      )),
     ),
     navbarPage(
       id = "view",
