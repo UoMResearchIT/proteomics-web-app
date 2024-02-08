@@ -16,6 +16,10 @@ source("save_as_button.R")
 ui <- function(request) {
   fluidPage(
     useShinyjs(),
+    tags$head(
+      #hide modbar from plotly plots (PCA and BoxPlot)
+      tags$style(HTML(".modebar {display: none !important;}")),
+    ),
     navbarPage(
       id = "view",
       title = "proteinBASE",
@@ -187,16 +191,14 @@ server <- function(input, output, session) {
     req(input$gene)
     return(bar_plot(input$gene, data()))
   })
-  output$plot_bar <- renderPlotly(ggplotly(.bar_plot()) |>
-                                    config(displayModeBar = F))
+  output$plot_bar <- renderPlotly(.bar_plot())
 
   #### Create box plot ####
   .box_plot <- reactive({
     req(input$gene)
     return(box_plot(input$gene, data()))
   })
-  output$plot_box <- renderPlotly(ggplotly(.box_plot()) |>
-                                    config(displayModeBar = F))
+  output$plot_box <- renderPlotly(.box_plot())
 
   #### Download buttons ####
   save_as_Server("pca_save_as", input$dataset, .pca_plot(), "PCA")
