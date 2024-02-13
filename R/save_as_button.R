@@ -92,6 +92,11 @@ save_as_Server <- function(id, dataset_name = NULL, plot = NULL, plot_tag = NULL
         } else if (format == "svg") {
           svg(file, width = w, height = h)
         }
+        if (class(plot) %in% c("Heatmap", "HeatmapList", "ComplexHeatmap")) {
+          print(plot)
+          dev.off()
+          return()
+        }
         ggsave(
           filename = file,
           plot = plot,

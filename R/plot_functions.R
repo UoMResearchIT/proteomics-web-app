@@ -32,40 +32,52 @@ pca_plot <- function(df){
 }
 
 #### TAB 2 ####
-function.heatmap <- function(matrix){
+generate_heatmap_colors <- function(matrix){
   x <- as.matrix(matrix)
   x.trunc <- as.vector(unique(x))
   x.trim <- x.trunc[x.trunc >= quantile(x.trunc, probs = 0.01, na.rm = T) &
                       x.trunc <= quantile(x.trunc, probs = 0.99, na.rm = T)]
   x.max <- which.max(x.trim)
   x.min <- which.min(x.trim)
-  # create a color function for the heatmap
+  # Create a color function for the heatmap values
   col_fun <- circlize::colorRamp2(c(x.trim[x.min], 0, x.trim[x.max]),
                                   c("blue", "white", "red"),
                                   space = "sRGB")
-  # create labels for the heatmap
-  rowlab <- gsub(".*,\\s*", "", rownames(x)) # UniProt ID for row labels
-  col_lab <- gsub("_", " ", colnames(x)) # for sample annotation
-  col_group <- gsub("_\\d+", "", colnames(x)) |> # for group annotation
-    unlist() |>
-    as.factor()
-  # create heatmap
+  # Create color lists for samples and groups labels
+  samples_names <- gsub("_", " ", colnames(x)) # for sample annotation
+  samples_colors <- rainbow(length(samples_names))
+  col_samples <- setNames(samples_colors, samples_names)
+  group_names <- gsub("_\\d+", "", colnames(x)) |> as.factor() |> levels()
+  group_colors <- hcl.colors(length(group_names))
+  col_group <- setNames(group_colors, group_names)
+
+  return(list(col_fun = col_fun, col_samples = col_samples, col_group = col_group))
+}
+
+make_heatmap <- function(matrix, heatmap_colors){
+  matrix <- as.matrix(matrix)
+  samples_lab <- gsub("_", " ", colnames(matrix))
+  groups_lab <- gsub("_\\d+", "", colnames(matrix))
+  row_lab <- gsub(".*,\\s*", "", rownames(matrix))
   set.seed(3)
-  ht <- ComplexHeatmap::Heatmap(x,
+  top_annotation = HeatmapAnnotation(Samples = samples_lab,
+                         Groups = groups_lab,
+                         col = list(Samples = heatmap_colors$col_samples,
+                                    Groups = heatmap_colors$col_group),
+                         show_annotation_name = T)
+  ht <- ComplexHeatmap::Heatmap(matrix,
                                 name = "Protein level",
-                                col = col_fun,
+                                col = heatmap_colors$col_fun,
                                 show_row_names = T,
-                                row_labels = rowlab,
-                                show_column_names = F,
+                                row_labels = row_lab,
+                                show_column_names = T,
                                 row_title = "Proteins",
                                 row_title_gp = grid::gpar(fontsize = 12,
                                                           fontface = "bold"),
                                 column_title = "",
                                 row_dend_width = unit(2, "cm"),
                                 row_names_gp = gpar(fontsize = 1),
-                                top_annotation = HeatmapAnnotation(Samples = col_lab,
-                                                                   Groups = col_group,
-                                                                   show_annotation_name = FALSE))
+                                top_annotation = top_annotation)
   return(ht)
 }
 
