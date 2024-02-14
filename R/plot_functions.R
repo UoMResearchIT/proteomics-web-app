@@ -18,16 +18,16 @@ pca_plot <- function(df){
              scale = TRUE)
   # Create a 2D Sample Plot
   p <- plotIndiv(object = pca,
-            comp = c(1,2),
-            ind.names = FALSE,
-            group = design$Group,
-            title = "Template data set",
-            legend = TRUE,
-            size.xlabel = rel(1.3),
-            size.ylabel = rel(1.3),
-            size.legend = rel(1.3),
-            cex = 0.8,
-            ellipse = TRUE)
+                 comp = c(1,2),
+                 ind.names = FALSE,
+                 group = design$Group,
+                 title = "Template data set",
+                 legend = TRUE,
+                 size.xlabel = rel(1.3),
+                 size.ylabel = rel(1.3),
+                 size.legend = rel(1.3),
+                 cex = 0.8,
+                 ellipse = TRUE)
   return(p$graph)
 }
 
@@ -54,31 +54,57 @@ generate_heatmap_colors <- function(matrix){
   return(list(col_fun = col_fun, col_samples = col_samples, col_group = col_group))
 }
 
-make_heatmap <- function(matrix, heatmap_colors){
-  matrix <- as.matrix(matrix)
-  samples_lab <- gsub("_", " ", colnames(matrix))
-  groups_lab <- gsub("_\\d+", "", colnames(matrix))
-  row_lab <- gsub(".*,\\s*", "", rownames(matrix))
-  set.seed(3)
+top_annotation <- function(data, heatmap_colors){
+  samples_lab <- gsub("_", " ", colnames(data))
+  groups_lab <- gsub("_\\d+", "", colnames(data))
   top_annotation = HeatmapAnnotation(Samples = samples_lab,
-                         Groups = groups_lab,
-                         col = list(Samples = heatmap_colors$col_samples,
-                                    Groups = heatmap_colors$col_group),
-                         show_annotation_name = T)
-  ht <- ComplexHeatmap::Heatmap(matrix,
-                                name = "Protein level",
+                                     Groups = groups_lab,
+                                     col = list(Samples = heatmap_colors$col_samples,
+                                                Groups = heatmap_colors$col_group),
+                                     show_annotation_name = T,
+                                     annotation_name_side = "left",
+                                     annotation_name_gp = gpar(fontsize = 9, fontface = "bold"))
+  return(top_annotation)
+}
+
+make_heatmap <- function(data, heatmap_colors){
+  data_m <- as.matrix(data)
+  set.seed(3)
+  ht <- ComplexHeatmap::Heatmap(data_m,
+                                name = "P. Level",
+                                cluster_rows = TRUE,
+                                cluster_columns = FALSE,
+                                col = heatmap_colors$col_fun,
+                                show_row_names = F,
+                                show_column_names = F,
+                                row_title = "Proteins",
+                                row_title_gp = gpar(fontsize = 10, fontface = "bold"),
+                                column_title = "",
+                                row_dend_width = unit(1.5, "cm"),
+                                top_annotation = top_annotation(data_m, heatmap_colors))
+  return(draw(ht,merge_legend = TRUE))
+}
+
+make_sub_heatmap <- function(data, heatmap_colors){
+  data_m <- as.matrix(data)
+  row_lab <- gsub(".*,\\s*", "", rownames(data_m))
+  set.seed(3)
+  ht <- ComplexHeatmap::Heatmap(data_m,
+                                name = "P. Level",
+                                cluster_rows = FALSE,
+                                cluster_columns = FALSE,
                                 col = heatmap_colors$col_fun,
                                 show_row_names = T,
                                 row_labels = row_lab,
+                                row_names_gp = gpar(fontsize = 9),
                                 show_column_names = T,
+                                column_names_gp = gpar(fontsize = 10),
+                                column_names_rot = 45,
                                 row_title = "Proteins",
-                                row_title_gp = grid::gpar(fontsize = 12,
-                                                          fontface = "bold"),
+                                row_title_gp = grid::gpar(fontsize = 12,fontface = "bold"),
                                 column_title = "",
-                                row_dend_width = unit(2, "cm"),
-                                row_names_gp = gpar(fontsize = 1),
-                                top_annotation = top_annotation)
-  return(ht)
+                                top_annotation = top_annotation(data_m, heatmap_colors))
+  return(draw(ht,merge_legend = TRUE))
 }
 
 #### TAB 3 ####

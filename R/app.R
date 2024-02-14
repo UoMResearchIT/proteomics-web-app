@@ -82,12 +82,12 @@ ui <- function(request) {
                    tabPanel('HeatMap',
                             fluidRow(
                               column(4,
-                                plotOutput("heatmap", width = 400, height = 400, brush = "heatmap_brush"),
-                                save_as_UI("heatmap_save_as", 300, 400),
+                                     plotOutput("heatmap", width = 400, height = 400, brush = "heatmap_brush"),
+                                     save_as_UI("heatmap_save_as", 300, 400),
                               ),
                               column(7, offset = 1,
-                                plotOutput("selected", width = 700, height = 400),
-                                save_as_UI("subheat_save_as", 600, 400),
+                                     plotOutput("selected", width = 700, height = 400),
+                                     save_as_UI("subheat_save_as", 600, 400),
                               )
                             ),
                    ),
@@ -186,9 +186,9 @@ server <- function(input, output, session) {
     #find md info file in ../data/dataset-info
     file_path <- paste0("../data/dataset-info/", input$dataset, ".md",sep="")
     if (file.exists(file_path)) {
-        return(file_path)
+      return(file_path)
     } else {
-        return(paste("Info for dataset", input$dataset, "not available."))
+      return(paste("Info for dataset", input$dataset, "not available."))
     }
   })
   output$dataset_info <- renderUI(includeMarkdown(dataset_info()))
@@ -201,7 +201,7 @@ server <- function(input, output, session) {
     req(input$dataset)
     excel_ok <- tryCatch({
       openxlsx::read.xlsx("../data/heatmaps/PXDtemplate_heatmap.xlsx",
-                                      sheet = 1, rowNames = TRUE)
+                          sheet = 1, rowNames = TRUE)
     }, error = function(e) {
       message("Error reading the Excel file:", conditionMessage(e))
       showNotification(
@@ -249,7 +249,7 @@ server <- function(input, output, session) {
   ht_obj = reactiveVal(NULL)
   ht_pos_obj = reactiveVal(NULL)
   .heatmap_plot <- reactive({
-    ht = draw(make_heatmap(heatmap_data(), ht_colors()))
+    ht = make_heatmap(heatmap_data(), ht_colors())
     ht_pos = htPositionsOnDevice(ht)
     ht_obj(ht)
     ht_pos_obj(ht_pos)
@@ -262,9 +262,12 @@ server <- function(input, output, session) {
   observeEvent(input$heatmap_brush, {
     lt = getPositionFromBrush(input$heatmap_brush)
     selection = selectArea(ht_obj(), lt[[1]], lt[[2]],
-          mark = FALSE, ht_pos = ht_pos_obj(),verbose = FALSE)
-    sub_matrix = heatmap_data()[unlist(selection$row_index), unlist(selection$column_index)]
-    .subheat_plot(draw(make_heatmap(sub_matrix,ht_colors())))
+                           mark = FALSE, verbose = FALSE,
+                           ht_pos = ht_pos_obj())
+    sub_rows = unlist(selection$row_index)
+    sub_cols = unlist(selection$column_index)
+    sub_data = heatmap_data()[sub_rows, sub_cols, drop = FALSE]
+    .subheat_plot(make_sub_heatmap(sub_data,ht_colors()))
     output$selected = renderPlot({
       .subheat_plot()
     })
