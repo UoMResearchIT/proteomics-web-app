@@ -86,8 +86,8 @@ ui <- function(request) {
                                      save_as_UI("heatmap_save_as", 300, 400),
                               ),
                               column(7, offset = 1,
-                                     plotOutput("selected", width = 700, height = 400),
-                                     save_as_UI("subheat_save_as", 600, 400),
+                                     uiOutput("sub_heat"),
+                                     save_as_UI("subheat_save_as", 650, 500),
                               )
                             ),
                    ),
@@ -267,10 +267,24 @@ server <- function(input, output, session) {
     sub_rows = unlist(selection$row_index)
     sub_cols = unlist(selection$column_index)
     sub_data = heatmap_data()[sub_rows, sub_cols, drop = FALSE]
-    .subheat_plot(make_sub_heatmap(sub_data,ht_colors()))
-    output$selected = renderPlot({
+    if (nrow(sub_data) == 0 || ncol(sub_data) == 0) {
+      .subheat_plot(NULL)
+      shinyjs::hide("subheat_save_as-save_as_button")
+    } else {
+      .subheat_plot(make_sub_heatmap(sub_data, ht_colors()))
+      shinyjs::show("subheat_save_as-save_as_button")
+    }
+    output$sub_heatmap = renderPlot({
       .subheat_plot()
     })
+  })
+  output$sub_heat = renderUI({
+    if (is.null(.subheat_plot())) {
+      return(HTML('<div style="color: gray; margin: 100px 30px;">
+      Drag and drop over the heatmap to select a sub-heatmap.</div>'))
+    } else {
+      return(plotOutput("sub_heatmap", width = 650, height = 500))
+    }
   })
 
   #### Create bar plot ####
@@ -288,6 +302,7 @@ server <- function(input, output, session) {
   output$plot_box <- renderPlotly(.box_plot())
 
   #### Download buttons ####
+  shinyjs::hide("subheat_save_as-save_as_button")
   save_as_Server("pca_save_as", input$dataset, .pca_plot(), "PCA")
   save_as_Server("heatmap_save_as", input$dataset, .heatmap_plot(), "HeatMap")
   save_as_Server("subheat_save_as", input$dataset, .subheat_plot(), "SubHeatMap")
