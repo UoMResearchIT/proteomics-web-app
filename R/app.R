@@ -75,17 +75,17 @@ ui <- function(request) {
                    id = "tab",
                    #### PCA ####
                    tabPanel('PCA',
-                            plotOutput('PCA_plot', width = 600, height = 450),
-                            save_as_UI("pca_save_as", 600, 450)
+                            plotOutput('PCA_plot', width = 600, height = 500),
+                            save_as_UI("pca_save_as", 600, 500)
                    ),
                    #### HeatMap ####
                    tabPanel('HeatMap',
                             fluidRow(
                               column(4,
-                                     plotOutput("heatmap", width = 400, height = 400, brush = "heatmap_brush"),
-                                     save_as_UI("heatmap_save_as", 300, 400),
+                                     plotOutput("heatmap", width = 250, height = 500, brush = "heatmap_brush"),
+                                     save_as_UI("heatmap_save_as", 250, 500),
                               ),
-                              column(7, offset = 1,
+                              column(8,
                                      uiOutput("sub_heat"),
                                      save_as_UI("subheat_save_as", 650, 500),
                               )
@@ -94,13 +94,13 @@ ui <- function(request) {
                    #### BoxPlot ####
                    tabPanel('BoxPlot',
                             fluidRow(
-                              column(6,
-                                     plotlyOutput("plot_bar"),
-                                     save_as_UI("bar_save_as", 500, 400)
+                              column(7,
+                                     plotlyOutput("plot_bar", width = 500, height = 500),
+                                     save_as_UI("bar_save_as", 500, 500)
                               ),
-                              column(6,
-                                     plotlyOutput("plot_box"),
-                                     save_as_UI("box_save_as", 500, 400)
+                              column(5,
+                                     plotlyOutput("plot_box", width = 350, height = 500),
+                                     save_as_UI("box_save_as", 350, 500)
                               ),
                             ),
                             tableOutput("near_rows_data")

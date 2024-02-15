@@ -1,5 +1,5 @@
 #### Settings ####
-font_family <- 'Courier'
+font_family <- 'Arial'
 
 ##### Plotting scripts ####
 
@@ -101,7 +101,7 @@ make_sub_heatmap <- function(data, heatmap_colors){
                                 column_names_gp = gpar(fontsize = 10),
                                 column_names_rot = 45,
                                 row_title = "Proteins",
-                                row_title_gp = grid::gpar(fontsize = 12,fontface = "bold"),
+                                row_title_gp = grid::gpar(fontsize = 12, fontface = "bold"),
                                 column_title = "",
                                 top_annotation = top_annotation(data_m, heatmap_colors))
   return(draw(ht,merge_legend = TRUE))
@@ -129,16 +129,10 @@ bar_plot <- function(gene_dropdown, df){
     # ggtitle(paste("Template data set", plot.data$Gene.symbol[1], sep = ", ")) +
     theme_light() +
     theme(text = element_text(family = font_family),
-          axis.text.x = element_text(size = 10,
-                                     colour = "black",
-                                     family = font_family,
-                                     angle = 45),
-          axis.text.y = element_text(size = 10,
-                                     colour = "black",
-                                     family = font_family),
-          legend.text = element_text(size = 10, family = font_family),
-          legend.position = "none",
-          legend.box.just = "center") +
+          axis.text.x = element_text(size = 10),
+          axis.text.y = element_text(size = 10),
+          legend.text = element_text(size = 10),
+          legend.position = "none") +
     labs(NULL)
   return(p)
 }
@@ -163,13 +157,9 @@ box_plot <- function(gene_dropdown, df){
     scale_y_continuous(name = "Normalized Log2-protein intensity") +
     theme_light() +
     theme(text = element_text(family = font_family),
-          axis.text.x = element_text(size = 10,
-                                     colour = "black",
-                                     family = font_family),
-          axis.text.y = element_text(size = 10,
-                                     colour = "black",
-                                     family = font_family),
-          legend.text = element_text(size = 10, family = font_family),
-          legend.position = "right ")
+          axis.text.x = element_text(size = 10),
+          axis.text.y = element_text(size = 10),
+          legend.text = element_text(size = 10),
+          legend.position = "none")
   return(p)
 }
