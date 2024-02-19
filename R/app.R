@@ -81,6 +81,21 @@ ui <- function(request) {
                    #### HeatMap ####
                    tabPanel('HeatMap',
                             fluidRow(
+                              div(style = "margin: 10px 10px;",
+                                selectizeInput(
+                                  inputId = "subh_gene",
+                                  label = NULL,
+                                  multiple = TRUE,
+                                  choices = NULL,
+                                  options = list(
+                                    create = TRUE,
+                                    placeholder = "Search for genes...",
+                                    onDropdownOpen = I("function($dropdown) {if (!this.lastQuery.length) {this.close(); this.settings.openOnFocus = false;}}"),
+                                    onType = I("function (str) {if (str === \"\") {this.close();}}"),
+                                    onItemAdd = I("function() {this.close();}")
+                                  )
+                                )
+                              ),
                               column(4,
                                      plotOutput("heatmap", width = 250, height = 500, brush = "heatmap_brush"),
                                      save_as_UI("heatmap_save_as", 250, 500),
@@ -210,6 +225,9 @@ server <- function(input, output, session) {
       )
     })
     ht_colors(generate_heatmap_colors(excel_ok))
+    updateSelectizeInput(session, "subh_gene",
+                         choices = sort(unique(unlist(strsplit(rownames(excel_ok),",")))),
+                         server = TRUE)
     return(excel_ok)
   })
   # The pca plot is currently using temporary fixed data. It is pre-processed
@@ -259,6 +277,7 @@ server <- function(input, output, session) {
 
   #### Create sub-heatmap ####
   .subheat_plot <- reactiveVal(NULL)
+  # From selection on heamap
   observeEvent(input$heatmap_brush, {
     lt = getPositionFromBrush(input$heatmap_brush)
     selection = selectArea(ht_obj(), lt[[1]], lt[[2]],
@@ -273,10 +292,34 @@ server <- function(input, output, session) {
     } else {
       .subheat_plot(make_sub_heatmap(sub_data, ht_colors()))
       shinyjs::show("subheat_save_as-save_as_button")
+      updateSelectizeInput(session, "subh_gene", selected = "")
     }
     output$sub_heatmap = renderPlot({
       .subheat_plot()
     })
+  })
+  # From search textbox
+  observeEvent(input$subh_gene, {
+    grep_str <- paste(input$subh_gene, collapse = "|")
+    if (grep_str != "") {
+      output$sub_heat_chosen_genes <- renderPrint(grep_str)
+      sub_rows <- grep(grep_str, rownames(heatmap_data()), ignore.case = TRUE)
+      sub_data <- heatmap_data()[sub_rows,]
+      if (nrow(sub_data) == 0) {
+        .subheat_plot(NULL)
+        shinyjs::hide("subheat_save_as-save_as_button")
+      } else {
+        .subheat_plot(make_sub_heatmap(sub_data, ht_colors()))
+        shinyjs::show("subheat_save_as-save_as_button")
+        shinyjs::hide("heatmap_brush")
+      }
+      output$sub_heatmap <- renderPlot({
+        .subheat_plot()
+      })
+    } else {
+      .subheat_plot(NULL)
+      shinyjs::hide("subheat_save_as-save_as_button")
+    }
   })
   output$sub_heat = renderUI({
     if (is.null(.subheat_plot())) {
