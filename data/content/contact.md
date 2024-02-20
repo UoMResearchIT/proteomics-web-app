@@ -1,3 +1,3 @@
 # Contact us
 
-Lennon Lab contact info here...
+Send us an email: proteinbase@manchester.ac.uk
