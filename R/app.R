@@ -27,6 +27,14 @@ ui <- function(request) {
         .modebar {display: none !important;}
         [id*='heatmap_control'] {display: none !important;}
         [id*='output_wrapper'] {display: none !important;}
+        .container {
+          display: flex;
+          flex-direction: row;
+          align-content: flex-start;
+          flex-wrap: wrap;
+          row-gap: 0px;
+          column-gap: 50px;
+        }
         "
       )),
     ),
@@ -46,27 +54,29 @@ ui <- function(request) {
                div(style = "height:50px"),
                #### Dataset and gene selection dropdown menus ####
                fluidRow(
-                 column(6,
-                        selectInput(
-                          inputId = 'dataset',
-                          label = 'Choose a dataset:',
-                          choices = gsub(
-                            pattern = "\\.xlsx$",
-                            "",
-                            list.files(
-                              path = "../data/datasets/",
-                              pattern = "\\.xlsx$",
-                              full.names = FALSE
-                            ),
-                          )
+                 div(class = "container",
+                  div(
+                    selectInput(
+                      inputId = 'dataset',
+                      label = 'Choose a dataset:',
+                      choices = gsub(
+                        pattern = "\\.xlsx$",
+                        "",
+                        list.files(
+                          path = "../data/datasets/",
+                          pattern = "\\.xlsx$",
+                          full.names = FALSE
                         ),
-                 ),
-                 column(6,
-                        # Only show gene dropdown if selected tab is BoxPlot
-                        conditionalPanel(
-                          condition = "input.tab == 'BoxPlot'",
-                          selectizeInput("gene", "Gene:", choices = NULL)
-                        )
+                      )
+                    ),
+                  ),
+                  div(
+                    # Only show gene dropdown if selected tab is BoxPlot
+                    conditionalPanel(
+                      condition = "input.tab == 'BoxPlot'",
+                      selectizeInput("gene", "Gene:", choices = NULL)
+                    )
+                  )
                  )
                ),
                #### Plot tabs ####
@@ -96,27 +106,31 @@ ui <- function(request) {
                                   )
                                 )
                               ),
-                              column(4,
-                                     plotOutput("heatmap", width = 250, height = 500, brush = "heatmap_brush"),
-                                     save_as_UI("heatmap_save_as", 250, 500),
-                              ),
-                              column(8,
-                                     uiOutput("sub_heat"),
-                                     save_as_UI("subheat_save_as", 650, 500),
+                              div(class = "container", style = "column-gap: 10px;",
+                                div(
+                                  plotOutput("heatmap", width = 250, height = 500, brush = "heatmap_brush"),
+                                  save_as_UI("heatmap_save_as", 250, 500),
+                                ),
+                                div(
+                                  uiOutput("sub_heat"),
+                                  save_as_UI("subheat_save_as", 600, 500),
+                                )
                               )
                             ),
                    ),
                    #### BoxPlot ####
                    tabPanel('BoxPlot',
                             fluidRow(
-                              column(7,
-                                     plotlyOutput("plot_bar", width = 500, height = 500),
-                                     save_as_UI("bar_save_as", 500, 500)
-                              ),
-                              column(5,
-                                     plotlyOutput("plot_box", width = 350, height = 500),
-                                     save_as_UI("box_save_as", 350, 500)
-                              ),
+                              div(class = "container",
+                                div(
+                                  plotlyOutput("plot_bar", width = 500, height = 500),
+                                  save_as_UI("bar_save_as", 500, 500)
+                                ),
+                                div(
+                                  plotlyOutput("plot_box", width = 300, height = 500),
+                                  save_as_UI("box_save_as", 300, 500)
+                                ),
+                              )
                             ),
                             tableOutput("near_rows_data")
                    ),
@@ -326,7 +340,7 @@ server <- function(input, output, session) {
       return(HTML('<div style="color: gray; margin: 100px 30px;">
       Drag and drop over the heatmap to select a sub-heatmap.</div>'))
     } else {
-      return(plotOutput("sub_heatmap", width = 650, height = 500))
+      return(plotOutput("sub_heatmap", width = 600, height = 500))
     }
   })
 
