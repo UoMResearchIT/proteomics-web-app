@@ -1,34 +1,44 @@
+#### Load libraries ####
+library(ggplot2)
+library(mixOmics)
 #### Settings ####
 font_family <- 'Arial'
 
 ##### Plotting scripts ####
 
 #### TAB 1 ####
-pca_plot <- function(df){
-  # create the group design
-  design <- data.frame("Samples" = seq(1:nrow(df)),
-                       "Group" = seq(1:nrow(df)))
-  design$Samples <- rownames(df)
-  design$Group <- gsub("_\\d+", "", design$Samples)
+pca_plot <- function(matrix){
+  # Run PCA
+  pca_protein <- mixOmics::pca(
+    X = matrix,
+    ncomp = nrow(matrix),
+    center = TRUE
+  )
+  # Extract from 'pca_protein' coordinates for the PCA plot
+  coord <- as.data.frame(round(pca_protein$variates$X, digits = 2))
+  coord$group <- as.factor(gsub("_\\d+", "", rownames(coord)))
+  coord$sampleName <- gsub("_", " ", rownames(coord))
+  # Extract labels for x and y axes
+  labels.pca <- as.vector(pca_protein$cum.var)
+  xlabel <- paste0("PC1, ",
+                   (round((labels.pca[1]*100),
+                          digits = 2)),"%")
+  ylabel <- paste0("PC2, ",
+                   (round(((labels.pca[2]-labels.pca[1])*100),
+                          digits = 2)),"%")
 
-  # Perform a PCA with pre-processed data
-  pca <- pca(X = df,
-             ncomp = nrow(df),
-             center = TRUE,
-             scale = TRUE)
-  # Create a 2D Sample Plot
-  p <- plotIndiv(object = pca,
-                 comp = c(1,2),
-                 ind.names = FALSE,
-                 group = design$Group,
-                 title = "Template data set",
-                 legend = TRUE,
-                 size.xlabel = rel(1.3),
-                 size.ylabel = rel(1.3),
-                 size.legend = rel(1.3),
-                 cex = 0.8,
-                 ellipse = TRUE)
-  return(p$graph)
+  # Generate 2D PCA plot
+  pca_plot <-  ggplot(coord,
+                      aes(x = PC1, y = PC2,
+                          color = group,
+                          text = paste("", sampleName))) +
+    geom_point(size = 4) +
+    labs(x = xlabel, y = ylabel, color = "Group") +
+    xlim((min(coord$PC1)-10), max(coord$PC1)+10) +
+    ylim((min(coord$PC2)-10), max(coord$PC2)+10) +
+    theme_light() +
+    guides(shape = "none")
+  return(pca_plot)
 }
 
 #### TAB 2 ####
@@ -117,7 +127,7 @@ bar_plot <- function(gene_dropdown, df){
     filter(gene.names == gene_dropdown) |>
     mutate(experiment_type = str_extract(experiment, "[A-Z]+")) |>
     filter(!is.na(expression))
-  p <- ggplot(data = df.plot, aes(x = experiment, y = expression)) 
+  p <- ggplot(data = df.plot, aes(x = experiment, y = expression))
   p <- p +
     geom_bar(mapping = aes(x = experiment,
                            y = expression,
@@ -126,7 +136,6 @@ bar_plot <- function(gene_dropdown, df){
              col = "black") +
     xlab("") +
     scale_y_continuous(name = "Normalized Log2-protein intensity") +
-    # ggtitle(paste("Template data set", plot.data$Gene.symbol[1], sep = ", ")) +
     theme_light() +
     theme(text = element_text(family = font_family),
           axis.text.x = element_text(size = 10),

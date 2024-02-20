@@ -1,13 +1,11 @@
 #### Load libraries ####
 library(shiny)
 library(shinyjs)
-library(ggplot2)
 library(readxl)
 library(tidyverse)
 library(plotly)
 library(InteractiveComplexHeatmap)
 library(ComplexHeatmap)
-library(mixOmics)
 library(markdown)
 
 source("plot_functions.R")
@@ -85,7 +83,7 @@ ui <- function(request) {
                    id = "tab",
                    #### PCA ####
                    tabPanel('PCA',
-                            plotOutput('PCA_plot', width = 600, height = 500),
+                            plotlyOutput('PCA_plot', width = 600, height = 500),
                             save_as_UI("pca_save_as", 600, 500)
                    ),
                    #### HeatMap ####
@@ -244,12 +242,21 @@ server <- function(input, output, session) {
                          server = TRUE)
     return(excel_ok)
   })
-  # The pca plot is currently using temporary fixed data. It is pre-processed
-  # specifically to make the pca plot.
-  # TODO: Pre-processing of data should happen within app so it can be applied
-  # to any selected dataset.
-  pca_data <- openxlsx::read.xlsx("../data/pcaplots/PXDtemplate_pca.xlsx",
-                                  sheet = 1, rowNames = TRUE)
+  pca_data <- reactive({
+    req(input$dataset)
+    file_path <- paste0("../data/pcaplots/", input$dataset, "_pca.xlsx",sep="")
+    excel_ok <- tryCatch({
+      openxlsx::read.xlsx(file_path, sheet = 1, rowNames = TRUE)
+    }, error = function(e) {
+      message("Error reading the Excel file:", conditionMessage(e))
+      showNotification(
+        "Error reading the selected dataset.",
+        type = "error", duration = 10
+      )
+      return(NULL)
+    })
+    return(excel_ok)
+  })
 
   #### Create gene drop-down menu ####
   observe({
@@ -272,10 +279,11 @@ server <- function(input, output, session) {
   })
 
   #### create PCA plot ####
-  .pca_plot <- reactive(
-    return(pca_plot(pca_data))
-  )
-  output$PCA_plot <- renderPlot(.pca_plot())
+  .pca_plot <- reactive({
+    req(pca_data())
+    return(pca_plot(pca_data()))
+  })
+  output$PCA_plot <- renderPlotly(.pca_plot())
 
   #### Create heatmap ####
   ht_obj = reactiveVal(NULL)
