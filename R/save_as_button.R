@@ -1,5 +1,27 @@
 save_as_UI <- function(id,  default_width = 600, default_height = 450) {
   tagList(
+    tags$head(
+      tags$style(HTML(
+        "
+        .save_as-container {
+          display: flex;
+          flex-direction: row;
+          align-content: flex-start;
+          flex-wrap: wrap;
+          row-gap: 0px;
+          column-gap: 20px;
+          justify-content: center;
+          background-color: #EFE;
+          border: 1px solid #ddd;
+          border-radius: 5px;
+          padding: 10px;
+          margin-left: 0px;
+          margin-bottom: 20px;
+          max-width: 500px;
+        }
+        "
+      )),
+    ),
     #### Download Button ####
     actionButton(
       NS(id,"save_as_button"),
@@ -14,53 +36,43 @@ save_as_UI <- function(id,  default_width = 600, default_height = 450) {
     ),
     #### Save As Options
     div(
-      class = "row",
-      id = NS(id,"save_as_options"),
-      style = "
-                                  background-color: #EFE;
-                                  border: 1px solid #ddd;
-                                  border-radius: 5px;
-                                  padding: 10px;
-                                  width: 650px;
-                                  margin-left: 0px;
-                                  margin-bottom: 20px;
-                                  display: none;
-                                ",
-      column(3,
-             style = "display: flex;
-                                         align-items: center;
-                                         justify-content: center;",
-             downloadButton(
-               NS(id,'download_button'),
-               "Save image",
-               class = "btn-info",
-               style = "padding: 20px 10px;"
-             )
+      class = "save_as-container",
+      id = NS(id, "save_as_options"),
+      style = "display: none;",
+      div(
+        downloadButton(
+          NS(id,'download_button'),
+          "Save image",
+          class = "btn-info",
+          style = "padding: 20px 10px;"
+        )
       ),
-      column(4,
-             radioButtons(
-               NS(id,"download_format"),
-               label = "Format:",
-               choices = list("png",
-                              "pdf",
-                              "svg"),
-               selected = "png",
-               inline = TRUE
-             )
+      div(
+        radioButtons(
+          NS(id,"download_format"),
+          label = "Format:",
+          choices = list("png",
+                          "pdf",
+                          "svg"),
+          selected = "png",
+          inline = TRUE
+        )
       ),
-      column(2,
-             numericInput(
-               NS(id,"download_image_width"),
-               label = "Width [px]",
-               value = default_width
-             )
+      div(
+        numericInput(
+          NS(id,"download_image_width"),
+          label = "Width [px]",
+          value = default_width,
+          width = "80px"
+        )
       ),
-      column(2,
-             numericInput(
-               NS(id,"download_image_height"),
-               label = "Height [px]",
-               value = default_height
-             )
+      div(
+        numericInput(
+          NS(id,"download_image_height"),
+          label = "Height [px]",
+          value = default_height,
+          width = "80px"
+        )
       ),
     ),
   )
