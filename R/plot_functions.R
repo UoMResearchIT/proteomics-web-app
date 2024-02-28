@@ -2,7 +2,19 @@
 library(ggplot2)
 library(mixOmics)
 #### Settings ####
-font_family <- 'Arial'
+font_family <- 'ArialMT'
+legend_param <- function() {
+  legend_param <- list(
+    title_gp = gpar(fontsize = 12, fontface = "bold", fontfamily = font_family),
+    labels_gp = gpar(fontsize = 11, fontfamily = font_family)
+  )
+  return(legend_param)
+}
+
+title_fonts <- function() {
+  title_fonts <- gpar(fontsize = 12, fontface = "bold", fontfamily = font_family)
+  return(title_fonts)
+}
 
 ##### Plotting scripts ####
 
@@ -64,7 +76,7 @@ generate_heatmap_colors <- function(matrix){
   return(list(col_fun = col_fun, col_samples = col_samples, col_group = col_group))
 }
 
-top_annotation <- function(data, heatmap_colors){
+top_annotation <- function(data, heatmap_colors, legend = TRUE) {
   samples_lab <- gsub("_", " ", colnames(data))
   groups_lab <- gsub("_\\d+", "", colnames(data))
   top_annotation = HeatmapAnnotation(Samples = samples_lab,
@@ -73,7 +85,9 @@ top_annotation <- function(data, heatmap_colors){
                                                 Groups = heatmap_colors$col_group),
                                      show_annotation_name = T,
                                      annotation_name_side = "left",
-                                     annotation_name_gp = gpar(fontsize = 9, fontface = "bold"))
+                                     annotation_name_gp = title_fonts(),
+                                     annotation_legend_param = legend_param(),
+                                     show_legend = legend)
   return(top_annotation)
 }
 
@@ -83,21 +97,34 @@ make_heatmap <- function(data, heatmap_colors){
   ht <- ComplexHeatmap::Heatmap(data_m,
                                 name = "P. Level",
                                 cluster_rows = TRUE,
-                                cluster_columns = FALSE,
+                                cluster_columns = TRUE,
                                 col = heatmap_colors$col_fun,
                                 show_row_names = F,
                                 show_column_names = F,
                                 row_title = "Proteins",
-                                row_title_gp = gpar(fontsize = 10, fontface = "bold"),
+                                row_title_gp = title_fonts(),
                                 column_title = "",
                                 row_dend_width = unit(1.5, "cm"),
-                                top_annotation = top_annotation(data_m, heatmap_colors))
-  return(draw(ht,merge_legend = TRUE))
+                                top_annotation = top_annotation(data_m, heatmap_colors),
+                                heatmap_legend_param = legend_param())
+  dht = draw(ht,merge_legend = TRUE,newpage = FALSE)
+  return(dht)
+}
+
+calculate_row_fontsize <- function(n_rows) {
+  if (n_rows <= 20) {
+    return(12)
+  } else if (n_rows <= 40) {
+    return(10)
+  } else {
+    return(8)
+  }
 }
 
 make_sub_heatmap <- function(data, heatmap_colors){
   data_m <- as.matrix(data)
   row_lab <- gsub(".*,\\s*", "", rownames(data_m))
+  row_font_size <- calculate_row_fontsize(length(row_lab))
   set.seed(3)
   ht <- ComplexHeatmap::Heatmap(data_m,
                                 name = "P. Level",
@@ -106,15 +133,14 @@ make_sub_heatmap <- function(data, heatmap_colors){
                                 col = heatmap_colors$col_fun,
                                 show_row_names = T,
                                 row_labels = row_lab,
-                                row_names_gp = gpar(fontsize = 9),
-                                show_column_names = T,
-                                column_names_gp = gpar(fontsize = 10),
-                                column_names_rot = 45,
+                                row_names_gp = gpar(fontsize = row_font_size, fontfamily = font_family),
+                                show_column_names = F,
                                 row_title = "Proteins",
-                                row_title_gp = grid::gpar(fontsize = 12, fontface = "bold"),
+                                row_title_gp = title_fonts(),
                                 column_title = "",
-                                top_annotation = top_annotation(data_m, heatmap_colors))
-  return(draw(ht,merge_legend = TRUE))
+                                top_annotation = top_annotation(data_m, heatmap_colors, legend = FALSE),
+                                show_heatmap_legend = FALSE)
+  return(draw(ht))
 }
 
 #### TAB 3 ####
