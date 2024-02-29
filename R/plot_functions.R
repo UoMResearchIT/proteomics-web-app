@@ -48,7 +48,7 @@ pca_plot <- function(matrix){
                           color = group,
                           text = paste("", sampleName))) +
     geom_point(size = 4) +
-    labs(x = xlabel, y = ylabel, color = "Group") +
+    labs(x = xlabel, y = ylabel, color = "") +
     xlim((min(coord$PC1)-10), max(coord$PC1)+10) +
     ylim((min(coord$PC2)-10), max(coord$PC2)+10) +
     theme_light() +

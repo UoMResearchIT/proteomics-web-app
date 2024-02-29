@@ -345,8 +345,13 @@ server <- function(input, output, session) {
   })
   output$sub_heat = renderUI({
     if (is.null(.subheat_plot())) {
-      return(HTML('<div style="color: gray; margin: 100px 30px;">
-      Drag and drop over the heatmap to select a sub-heatmap.</div>'))
+      return(HTML(
+        '<div style="color: gray; margin: 100px auto; text-align: center;
+        margin-left: 100px; border: 1px dashed gray; padding: 10px;">
+          Use the search bar to find proteins,<br>
+          or click and drag over the heatmap.
+        </div>'
+      ))
     } else {
       return(plotOutput("sub_heatmap", width = 600, height = 500))
     }
