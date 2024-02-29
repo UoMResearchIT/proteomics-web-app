@@ -1,19 +1,22 @@
 #### Load libraries ####
 library(ggplot2)
 library(mixOmics)
-#### Settings ####
-font_family <- 'ArialMT'
-legend_param <- function() {
-  legend_param <- list(
-    title_gp = gpar(fontsize = 12, fontface = "bold", fontfamily = font_family),
-    labels_gp = gpar(fontsize = 11, fontfamily = font_family)
-  )
-  return(legend_param)
-}
 
-title_fonts <- function() {
-  title_fonts <- gpar(fontsize = 12, fontface = "bold", fontfamily = font_family)
+#### Settings ####
+font_family <- 'sans'
+title_fontsize <- 13
+label_fontsize <- 11
+# Fonts in complex heatmaps are smaller, so added an extra pt.
+title_font_gp <- function() {
+  title_fonts <- gpar(fontsize = title_fontsize + 1,
+                      fontface = "bold",
+                      fontfamily = font_family)
   return(title_fonts)
+}
+label_font_gp <- function() {
+  label_fonts <- gpar(fontsize = label_fontsize + 1,
+                      fontfamily = font_family)
+  return(label_fonts)
 }
 
 ##### Plotting scripts ####
@@ -49,6 +52,9 @@ pca_plot <- function(matrix){
     xlim((min(coord$PC1)-10), max(coord$PC1)+10) +
     ylim((min(coord$PC2)-10), max(coord$PC2)+10) +
     theme_light() +
+    theme(text = element_text(family = font_family, size = title_fontsize),
+          axis.text.x = element_text(size = label_fontsize),
+          axis.text.y = element_text(size = label_fontsize)) +
     guides(shape = "none")
   return(pca_plot)
 }
@@ -85,8 +91,11 @@ top_annotation <- function(data, heatmap_colors, legend = TRUE) {
                                                 Groups = heatmap_colors$col_group),
                                      show_annotation_name = T,
                                      annotation_name_side = "left",
-                                     annotation_name_gp = title_fonts(),
-                                     annotation_legend_param = legend_param(),
+                                     annotation_name_gp = label_font_gp(),
+                                     annotation_legend_param = list(
+                                       title_gp = title_font_gp(),
+                                       labels_gp = label_font_gp()
+                                     ),
                                      show_legend = legend)
   return(top_annotation)
 }
@@ -102,23 +111,23 @@ make_heatmap <- function(data, heatmap_colors){
                                 show_row_names = F,
                                 show_column_names = F,
                                 row_title = "Proteins",
-                                row_title_gp = title_fonts(),
+                                row_title_gp = title_font_gp(),
                                 column_title = "",
                                 row_dend_width = unit(1.5, "cm"),
                                 top_annotation = top_annotation(data_m, heatmap_colors),
-                                heatmap_legend_param = legend_param())
+                                heatmap_legend_param = list(
+                                  title_gp = title_font_gp(),
+                                  labels_gp = label_font_gp()
+                                )
+                              )
   dht = draw(ht,merge_legend = TRUE,newpage = FALSE)
   return(dht)
 }
 
 calculate_row_fontsize <- function(n_rows) {
-  if (n_rows <= 20) {
-    return(12)
-  } else if (n_rows <= 40) {
-    return(10)
-  } else {
-    return(8)
-  }
+  # Uses at most 12pt and at least 3pt font size for row names
+  # Starting at 20 rows, the font size decreases by 1pt for every 10 rows
+  return(max(12 - floor((n_rows - 20) / 10), 3))
 }
 
 make_sub_heatmap <- function(data, heatmap_colors){
@@ -136,7 +145,7 @@ make_sub_heatmap <- function(data, heatmap_colors){
                                 row_names_gp = gpar(fontsize = row_font_size, fontfamily = font_family),
                                 show_column_names = F,
                                 row_title = "Proteins",
-                                row_title_gp = title_fonts(),
+                                row_title_gp = title_font_gp(),
                                 column_title = "",
                                 top_annotation = top_annotation(data_m, heatmap_colors, legend = FALSE),
                                 show_heatmap_legend = FALSE)
@@ -163,10 +172,9 @@ bar_plot <- function(gene_dropdown, df){
     xlab("") +
     scale_y_continuous(name = "Normalized Log2-protein intensity") +
     theme_light() +
-    theme(text = element_text(family = font_family),
-          axis.text.x = element_text(size = 10),
-          axis.text.y = element_text(size = 10),
-          legend.text = element_text(size = 10),
+    theme(text = element_text(family = font_family, size = title_fontsize),
+          axis.text.x = element_text(size = label_fontsize),
+          axis.text.y = element_text(size = label_fontsize),
           legend.position = "none") +
     labs(NULL)
   return(p)
@@ -191,10 +199,9 @@ box_plot <- function(gene_dropdown, df){
     xlab("") +
     scale_y_continuous(name = "Normalized Log2-protein intensity") +
     theme_light() +
-    theme(text = element_text(family = font_family),
-          axis.text.x = element_text(size = 10),
-          axis.text.y = element_text(size = 10),
-          legend.text = element_text(size = 10),
+    theme(text = element_text(family = font_family, size = title_fontsize),
+          axis.text.x = element_text(size = label_fontsize),
+          axis.text.y = element_text(size = label_fontsize),
           legend.position = "none")
   return(p)
 }
