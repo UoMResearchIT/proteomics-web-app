@@ -194,17 +194,26 @@ server <- function(input, output, session) {
   data <- reactive({
     req(input$dataset)
     excel_ok <- tryCatch({
-      read_excel(paste0('../data/datasets/',input$dataset, '.xlsx'))[,-1] |>
-        pivot_longer(cols = !(UniprotID:gene.names),
+      df <- read_excel(paste0('../data/datasets/',input$dataset, '.xlsx'))[,-1]
+      #############################################################################
+      #### This should not be needed once we stop using mixed old and new data ####
+      col_names <- colnames(df)
+      if ("UniprotID" %in% col_names && "gene.names" %in% col_names) {
+        df <- df %>%
+          rename(Identifiers = UniprotID, Gene = gene.names)
+      }
+      #############################################################################
+      df <- df |>
+        pivot_longer(cols = !(Identifiers:Gene),
                      names_to = "experiment",
                      values_to = "expression")
     }, error = function(e) {
-      message("Error reading the Excel file:", conditionMessage(e))
+      message("Error reading the dataset file:", conditionMessage(e))
       showNotification(
         "Error reading the selected dataset.",
         type = "error", duration = 10
       )
-      return(tibble(gene.names = ""))
+      return(tibble(Gene = ""))
     })
     return(excel_ok)
   })
@@ -226,13 +235,13 @@ server <- function(input, output, session) {
   ht_colors = reactiveVal(NULL)
   heatmap_data <- reactive({
     req(input$dataset)
+    file_path <- paste0("../data/heatmaps/", input$dataset, "_heatmap.xlsx",sep="")
     excel_ok <- tryCatch({
-      openxlsx::read.xlsx("../data/heatmaps/PXDtemplate_heatmap.xlsx",
-                          sheet = 1, rowNames = TRUE)
+      openxlsx::read.xlsx(file_path, sheet = 1, rowNames = TRUE)
     }, error = function(e) {
-      message("Error reading the Excel file:", conditionMessage(e))
+      message("Error reading the heatmap file:", conditionMessage(e))
       showNotification(
-        "Error reading the selected dataset.",
+        "Error reading the selected heatmap.",
         type = "error", duration = 10
       )
     })
@@ -248,9 +257,9 @@ server <- function(input, output, session) {
     excel_ok <- tryCatch({
       openxlsx::read.xlsx(file_path, sheet = 1, rowNames = TRUE)
     }, error = function(e) {
-      message("Error reading the Excel file:", conditionMessage(e))
+      message("Error reading the pca file:", conditionMessage(e))
       showNotification(
-        "Error reading the selected dataset.",
+        "Error reading the selected pca.",
         type = "error", duration = 10
       )
       return(NULL)
@@ -261,7 +270,7 @@ server <- function(input, output, session) {
   #### Create gene drop-down menu ####
   observe({
     # Update the gene list on the server side
-    items <- sort(unique(data()$gene.names))
+    items <- sort(unique(data()$Gene))
     if (!(selected_gene() %in% items)) {
       if (!(selected_gene() == "") && (input$tab == "BoxPlot")) {
         showNotification(

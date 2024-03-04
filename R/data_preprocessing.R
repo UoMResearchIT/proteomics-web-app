@@ -7,25 +7,43 @@ library(tidyverse)
 library(openxlsx)
 library(readxl)
 library(tidyr)
+library(dplyr)
+
 
 #### Full pre-processing pipeline ####
-preprocess_data <- function(raw_data_path, dataset_name="") {
+preprocess_data <- function(raw_data_path = "", dataset_name = "", dataset_path = "") {
+  # This function triggers the full data pre-processing pipeline.
+  # To go from the raw txt file with the data, provide the `raw_data_path`.
+  # The `dataset_name` is optional, and it is used to name the output files.
+  # To skip the data preparation, provide the `dataset_path` instead of the `raw_data_path`.
+
   # Set paths
   data_path <- "data/"
   if (dataset_name == "") {
     dataset_name <- gsub(".txt", "", basename(raw_data_path))
   }
-  dataset_path <- paste(data_path, "datasets/", dataset_name, ".xlsx", sep="")
   pca_data_path <- paste(data_path, "pcaplots/", dataset_name, "_pca.xlsx", sep="")
   heatmaps_path <- paste(data_path, "heatmaps/", dataset_name, "_heatmap.xlsx", sep="")
 
   # Prepare dataset
-  prepare_dataset(raw_data_path, dataset_path)
+  if (dataset_path == "") {
+    dataset_path <- paste(data_path, "datasets/", dataset_name, ".xlsx", sep="")
+    prepare_dataset(raw_data_path, dataset_path)
+  }
 
   # Load protein data
   protein_data <- tryCatch({
-    read_excel(dataset_path) |>
-      pivot_longer(cols = !(UniprotID:gene.names),
+    df <- read_excel(dataset_path)
+    #############################################################################
+    #### This should not be needed once we stop using mixed old and new data ####
+    col_names <- colnames(df)
+    if ("UniprotID" %in% col_names && "gene.names" %in% col_names) {
+      df <- df %>%
+        rename(Identifiers = UniprotID, Gene = gene.names)
+    }
+    #############################################################################
+    df <- df |>
+      pivot_longer(cols = !(Identifiers:Gene),
                    names_to = "experiment",
                    values_to = "expression")
   }, error = function(e) {
@@ -37,8 +55,13 @@ preprocess_data <- function(raw_data_path, dataset_name="") {
   heatmap_data(protein_data, heatmaps_path)
 }
 
+
 #### Generates dataset from raw txt ####
 prepare_dataset <- function(raw_data_path, dataset_path) {
+  # This function reads the raw txt file with the data and prepares it as protein data.
+  # The `raw_data_path` is the path to the raw txt file with the data.
+  # The `dataset_path` is the path to save the prepared dataset.
+
   peptides <- read.delim(raw_data_path)
   # Identify columns with quantitative expression values
   ecols <- grep("Intensity.", names(peptides))
@@ -109,8 +132,13 @@ prepare_dataset <- function(raw_data_path, dataset_path) {
   )
 }
 
+
 #### PCA plot ####
 pca_data <- function(protein_data, pca_data_path) {
+  # This function prepares the protein data for PCA plot.
+  # The `protein_data` is the already loaded and prepared protein data.
+  # The `pca_data_path` is the output file path.
+
   protein_pca <- protein_data |>
     dplyr::select_if(is.numeric)
   # Identify and remove rows with missing values
@@ -126,8 +154,13 @@ pca_data <- function(protein_data, pca_data_path) {
                        rowNames = TRUE, overwrite = TRUE)
 }
 
+
 #### Heatmap plot ####
 heatmap_data <- function(protein_data, heatmaps_path) {
+  # This function prepares the protein data for Heatmap plots.
+  # The `protein_data` is the already loaded and prepared protein data.
+  # The `heatmaps_path` is the output file path.
+
   protein_heatmap <- protein_data
   # Handle missing values in the data set
   protein_heatmap$nZero <- rowSums(is.na(
@@ -150,11 +183,9 @@ heatmap_data <- function(protein_data, heatmaps_path) {
     protein_heatmap$Gene[mult_ids] <- ids
   }
   # Handling missing identifiers
-  if (any(protein_heatmap$Gene == "") == TRUE) {
-    miss_ids <- which(protein_heatmap$Gene == "")
-    ids <- protein_heatmap$Protein[miss_ids]
-    protein_heatmap$Gene[miss_ids] <- ids
-  }
+  missing_ids <- which(is.na(protein_heatmap$Gene) | protein_heatmap$Gene == "")
+  protein_heatmap$Gene[missing_ids] <- protein_heatmap$Protein[missing_ids]
+
   protein_heatmap <- protein_heatmap |>
     dplyr::group_by(Protein) |>
     dplyr::arrange(Identifiers) |>
