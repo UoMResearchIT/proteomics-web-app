@@ -3,10 +3,10 @@
 #' shiny::runApp('R',port = 5678)
 
 #### Front end ####
-source("app_ui.R")
+source("R/app_ui.R")
 
 #### Back end ####
-source("app_server.R")
+source("R/app_server.R")
 
 #### Serve ####
 enableBookmarking(store = "url")

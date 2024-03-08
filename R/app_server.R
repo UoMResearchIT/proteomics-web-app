@@ -11,8 +11,8 @@ library(plotly)
 library(InteractiveComplexHeatmap)
 
 
-source("plot_functions.R")
-source("save_as_button.R")
+source("R/plot_functions.R")
+source("R/save_as_button.R")
 
 app_server <- function(input, output, session) {
   thematic::thematic_shiny()
@@ -55,7 +55,7 @@ app_server <- function(input, output, session) {
   data <- reactive({
     req(input$dataset)
     excel_ok <- tryCatch({
-      read_excel(paste0("../data/datasets/", input$dataset, ".xlsx"))[, -1] |>
+      read_excel(paste0("data/datasets/", input$dataset, ".xlsx"))[, -1] |>
         pivot_longer(cols = !(UniprotID:gene.names),
                      names_to = "experiment",
                      values_to = "expression")
@@ -71,8 +71,8 @@ app_server <- function(input, output, session) {
   })
   dataset_info <- reactive({
     req(input$dataset)
-    #find md info file in ../data/dataset-info
-    file_path <- paste0("../data/dataset-info/", input$dataset, ".md", sep = "")
+    #find md info file in data/dataset-info
+    file_path <- paste0("data/dataset-info/", input$dataset, ".md", sep = "")
     if (file.exists(file_path)) {
       return(file_path)
     } else {
@@ -88,7 +88,7 @@ app_server <- function(input, output, session) {
   heatmap_data <- reactive({
     req(input$dataset)
     excel_ok <- tryCatch({
-      openxlsx::read.xlsx("../data/heatmaps/PXDtemplate_heatmap.xlsx",
+      openxlsx::read.xlsx("data/heatmaps/PXDtemplate_heatmap.xlsx",
                           sheet = 1, rowNames = TRUE)
     }, error = function(e) {
       message("Error reading the Excel file:", conditionMessage(e))
@@ -109,7 +109,7 @@ app_server <- function(input, output, session) {
   pca_data <- reactive({
     req(input$dataset)
     file_path <- paste0(
-      "../data/pcaplots/",
+      "data/pcaplots/",
       input$dataset,
       "_pca.xlsx",
       sep = ""

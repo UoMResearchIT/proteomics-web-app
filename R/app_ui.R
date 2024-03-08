@@ -7,7 +7,7 @@ library(shiny)
 library(shinyjs)
 library(plotly)
 
-source("save_as_button.R")
+source("R/save_as_button.R")
 
 
 app_ui <- function(request) {
@@ -44,7 +44,7 @@ app_ui <- function(request) {
       #### Landing page ####
       tabPanel("Home",
         value = "home",
-        div(includeMarkdown("../data/content/home.md"))
+        div(includeMarkdown("data/content/home.md"))
       ),
       #### Data Visualization Tool ####
       tabPanel("Data Visualization Tool",
@@ -61,7 +61,7 @@ app_ui <- function(request) {
                   pattern = "\\.xlsx$",
                   "",
                   list.files(
-                    path = "../data/datasets/",
+                    path = "data/datasets/",
                     pattern = "\\.xlsx$",
                     full.names = FALSE
                   ),
@@ -149,17 +149,17 @@ app_ui <- function(request) {
       #### Plot Description ####
       tabPanel("Plot Description",
         value = "plot_description",
-        div(includeMarkdown("../data/content/plot_description.md"))
+        div(includeMarkdown("data/content/plot_description.md"))
       ),
       #### Useful Links ####
       tabPanel("Useful Links",
         value = "useful_links",
-        div(includeMarkdown("../data/content/useful_links.md"))
+        div(includeMarkdown("data/content/useful_links.md"))
       ),
       #### Contact ####
       tabPanel("Contact",
         value = "contact",
-        div(includeMarkdown("../data/content/contact.md"))
+        div(includeMarkdown("data/content/contact.md"))
       )
     )
   )
