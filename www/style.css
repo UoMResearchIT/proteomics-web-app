@@ -1,0 +1,74 @@
+/* Banner */
+#uom-logo {
+    height: auto;
+    width: 150px;
+    margin-bottom: 15px;
+    margin-top: 15px;
+    margin-right: 30px;
+}
+.header {
+    display: flex;
+    align-self: stretch;
+    align-items: baseline;
+    flex-wrap: nowrap;
+    margin-left: 60px;
+    margin-right: 40px;
+}
+.header-item {
+    padding: 0;
+    align-self: center;
+}
+#header-title {
+    flex-grow: 1;
+}
+#header-appname {
+    color: #660099;
+    font-size: 20pt;
+    line-height: 20pt;
+    font-weight: bold;
+    margin-bottom: 0;
+}
+#department {
+    color: #999999;
+    font-size: 10pt;
+    margin-bottom: 0;
+}
+#github-logo {
+    height: auto;
+    width: 30px;
+    margin-right: 10px;
+    flex-grow: 0;
+}
+#github-logo-container {
+    flex-grow: 0;
+}
+
+/* Navigation bar */
+.navbar {
+    margin-bottom: 30px;
+    min-width: 450px;
+}
+
+/* Data visualization container alignment */
+.container {
+    display: flex;
+    flex-direction: row;
+    align-content: flex-start;
+    flex-wrap: wrap;
+    row-gap: 0px;
+    column-gap: 50px;
+    min-width: 450px;
+}
+
+/* Hide modbar from plotly plots (PCA and BoxPlot) */
+.modebar {
+    display: none !important;
+}
+/* Hide the control bar from heatmap and sub-heatmap */
+[id*='heatmap_control'] {
+    display: none !important;
+}
+/* Hide the output wrapper from heatmap and sub-heatmap */
+[id*='output_wrapper'] {
+    display: none !important;
+}

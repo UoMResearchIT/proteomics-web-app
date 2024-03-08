@@ -9,37 +9,68 @@ library(plotly)
 
 source("R/save_as_button.R")
 
+# Custom bootstrap theme
+custom_theme <- bslib::bs_theme(
+  version = 5,
+  bg = "#FFFFFF",
+  fg = "#000000",
+  primary = "#660099",
+  secondary = "#999999",
+  base_font = bslib::font_google("Open Sans")
+)
+
 
 app_ui <- function(request) {
   fluidPage(
     #### Headers ####
     useShinyjs(),
-    tags$head(
-      # Hide modbar from plotly plots (PCA and BoxPlot)
-      # Hide the control bar from heatmap and sub-heatmap
-      # Hide the output wrapper from heatmap and sub-heatmap
-      tags$style(HTML(
-        "
-        .modebar {display: none !important;}
-        [id*='heatmap_control'] {display: none !important;}
-        [id*='output_wrapper'] {display: none !important;}
-        .container {
-          display: flex;
-          flex-direction: row;
-          align-content: flex-start;
-          flex-wrap: wrap;
-          row-gap: 0px;
-          column-gap: 50px;
-        }
-        "
-      )),
-    ),
+    tags$link(rel = "stylesheet", type = "text/css", href = "style.css"),
+
     #### Content ####
+
+    # Banner
+    tag("header",
+      list(
+        id = "banner",
+        class = "header",
+        a(
+          class = "header-item",
+          href = "https://www.manchester.ac.uk/",
+          img(
+            src = "logo_col_white_background.png",
+            alt = "University of Manchester logo",
+            id = "uom-logo"
+          )
+        ),
+        div(
+          id = "header-title",
+          class = "header-item",
+          p(id = "department", "The Lennon Lab"),
+          p(id = "header-appname", "proteinBASE")
+        ),
+        div(
+          id = "github-logo-container",
+          class = "header-item",
+          a(
+            href = "https://github.com/UoMResearchIT/proteomics-web-app",
+            img(
+              src = "github-mark.png",
+              alt = "GitHub logo",
+              id = "github-logo"
+            )
+          )
+        )
+      )
+    ),
 
     bslib::page_navbar(
       id = "view",
       title = "proteinBASE",
-      theme = bslib::bs_theme(bootswatch = "flatly"),
+      fluid = FALSE,
+      collapsible = TRUE,
+      lang = "en",
+      theme = custom_theme,
+      bg = "#660099",
 
       #### Landing page ####
       tabPanel("Home",
@@ -49,7 +80,6 @@ app_ui <- function(request) {
       #### Data Visualization Tool ####
       tabPanel("Data Visualization Tool",
         value = "data",
-        div(style = "height:50px"),
         #### Dataset and gene selection dropdown menus ####
         fluidRow(
           div(class = "container",
