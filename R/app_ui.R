@@ -6,6 +6,7 @@
 library(shiny)
 library(shinyjs)
 library(plotly)
+library(markdown)
 
 source("R/save_as_button.R")
 
