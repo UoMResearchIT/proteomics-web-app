@@ -173,21 +173,27 @@ app_server <- function(input, output, session) {
   output$heatmap <- renderPlot(.heatmap_plot())
 
   #### Create sub-heatmap ####
+  sub_data <- reactiveVal(NULL)
   .subheat_plot <- reactiveVal(NULL)
   # From selection on heamap
   observeEvent(input$heatmap_brush, {
     lt <- getPositionFromBrush(input$heatmap_brush)
-    selection <- selectArea(ht_obj(), lt[[1]], lt[[2]],
-                            mark = FALSE, verbose = FALSE,
-                            ht_pos = ht_pos_obj())
+    selection <- selectArea(ht_obj(),
+                            pos1 = lt[[1]],
+                            pos2 = lt[[2]],
+                            ht_pos = ht_pos_obj(),
+                            mark = FALSE,
+                            verbose = FALSE,
+                            calibrate = FALSE)
     sub_rows <- unlist(selection$row_index)
     sub_cols <- unlist(selection$column_index)
-    sub_data <- heatmap_data()[sub_rows, sub_cols, drop = FALSE]
-    if (nrow(sub_data) == 0 || ncol(sub_data) == 0) {
+    sub_data(heatmap_data()[sub_rows, sub_cols, drop = FALSE])
+    if (nrow(sub_data()) == 0 || ncol(sub_data()) == 0) {
       .subheat_plot(NULL)
       shinyjs::hide("subheat_save_as-save_as_button")
+      shinyjs::hide("subheat_save_as-save_as_options")
     } else {
-      .subheat_plot(make_sub_heatmap(sub_data, ht_colors()))
+      .subheat_plot(make_sub_heatmap(sub_data(), ht_colors()))
       shinyjs::show("subheat_save_as-save_as_button")
       updateSelectizeInput(session, "subh_gene", selected = "")
     }
@@ -201,12 +207,13 @@ app_server <- function(input, output, session) {
     if (grep_str != "") {
       output$sub_heat_chosen_genes <- renderPrint(grep_str)
       sub_rows <- grep(grep_str, rownames(heatmap_data()), ignore.case = TRUE)
-      sub_data <- heatmap_data()[sub_rows, ]
-      if (nrow(sub_data) == 0) {
+      sub_data(heatmap_data()[sub_rows, ])
+      if (nrow(sub_data()) == 0) {
         .subheat_plot(NULL)
         shinyjs::hide("subheat_save_as-save_as_button")
+        shinyjs::hide("subheat_save_as-save_as_options")
       } else {
-        .subheat_plot(make_sub_heatmap(sub_data, ht_colors()))
+        .subheat_plot(make_sub_heatmap(sub_data(), ht_colors()))
         shinyjs::show("subheat_save_as-save_as_button")
         shinyjs::hide("heatmap_brush")
       }
