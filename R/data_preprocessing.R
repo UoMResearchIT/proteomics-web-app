@@ -7,17 +7,29 @@ library(tidyverse)
 library(openxlsx)
 library(readxl)
 library(tidyr)
+library(SummarizedExperiment)
 
 #### Full pre-processing pipeline ####
-preprocess_data <- function(raw_data_path, dataset_name="") {
+preprocess_data <- function(raw_data_path, dataset_name = "") {
   # Set paths
-  data_path <- "data/"
+  data_path <- "/tmp/"
   if (dataset_name == "") {
     dataset_name <- gsub(".txt", "", basename(raw_data_path))
   }
-  dataset_path <- paste(data_path, "datasets/", dataset_name, ".xlsx", sep="")
-  pca_data_path <- paste(data_path, "pcaplots/", dataset_name, "_pca.xlsx", sep="")
-  heatmaps_path <- paste(data_path, "heatmaps/", dataset_name, "_heatmap.xlsx", sep="")
+  dataset_path <- paste(data_path, "datasets/",
+                        dataset_name, ".xlsx",
+                        sep = "")
+  pca_data_path <- paste(data_path, "pcaplots/",
+                         dataset_name, "_pca.xlsx",
+                         sep = "")
+  heatmaps_path <- paste(data_path, "heatmaps/",
+                         dataset_name, "_heatmap.xlsx",
+                         sep = "")
+  files <- c(dataset_path, pca_data_path, heatmaps_path)
+  # Make sure directories exist
+  for (file in files){
+    dir.create(dirname(file), recursive = TRUE, showWarnings = FALSE)
+  }
 
   # Prepare dataset
   prepare_dataset(raw_data_path, dataset_path)
@@ -25,7 +37,7 @@ preprocess_data <- function(raw_data_path, dataset_name="") {
   # Load protein data
   protein_data <- tryCatch({
     read_excel(dataset_path) |>
-      pivot_longer(cols = !(UniprotID:gene.names),
+      pivot_longer(cols = !(Identifiers:Gene),
                    names_to = "experiment",
                    values_to = "expression")
   }, error = function(e) {
@@ -134,14 +146,14 @@ heatmap_data <- function(protein_data, heatmaps_path) {
     dplyr::select_if(protein_heatmap, is.numeric)
   ))
   # Exclude variables with only missing values
-  total_nVar <- ncol(dplyr::select_if(protein_heatmap, is.numeric)) - 1
-  if (any(protein_heatmap$nZero == total_nVar)) {
-    protein_heatmap <- protein_heatmap[!protein_heatmap$nZero == total_nVar, ]
+  total_n_var <- ncol(dplyr::select_if(protein_heatmap, is.numeric)) - 1
+  if (any(protein_heatmap$nZero == total_n_var)) {
+    protein_heatmap <- protein_heatmap[!protein_heatmap$nZero == total_n_var, ]
   }
   # Exclude variables with missing values > 25%
-  if (any(protein_heatmap$nZero > (total_nVar * 0.25))) {
+  if (any(protein_heatmap$nZero > (total_n_var * 0.25))) {
     protein_heatmap <-
-      protein_heatmap[protein_heatmap$nZero < (total_nVar * 0.25), ]
+      protein_heatmap[protein_heatmap$nZero < (total_n_var * 0.25), ]
   }
   # Handling multiple identifiers
   if (any(grepl(";", protein_heatmap$Gene) == TRUE)) {
@@ -150,11 +162,9 @@ heatmap_data <- function(protein_data, heatmaps_path) {
     protein_heatmap$Gene[mult_ids] <- ids
   }
   # Handling missing identifiers
-  if (any(protein_heatmap$Gene == "") == TRUE) {
-    miss_ids <- which(protein_heatmap$Gene == "")
-    ids <- protein_heatmap$Protein[miss_ids]
-    protein_heatmap$Gene[miss_ids] <- ids
-  }
+  missing_ids <- which(is.na(protein_heatmap$Gene) | protein_heatmap$Gene == "")
+  protein_heatmap$Gene[missing_ids] <- protein_heatmap$Protein[missing_ids]
+
   protein_heatmap <- protein_heatmap |>
     dplyr::group_by(Protein) |>
     dplyr::arrange(Identifiers) |>

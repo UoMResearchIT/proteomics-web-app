@@ -1,0 +1,40 @@
+services:
+  minio:
+    image: quay.io/minio/minio
+    container_name: proteomics-minio
+    # restart: unless-stopped
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      - MINIO_ROOT_USER=ROOTUSER
+      - MINIO_ROOT_PASSWORD=CHANGEME123
+    volumes:
+      - ${HOME}/proteomics-web-app/data:/data
+    command: server /data --console-address ":9001"
+
+  rabbitmq:
+    image: docker.io/bitnami/rabbitmq:3.12
+    container_name: rabbitmq
+    restart: unless-stopped
+    ports:
+      - '1883:1883'
+    environment:
+      # - RABBITMQ_SECURE_PASSWORD=yes
+      # - RABBITMQ_USERNAME=adminrabbit
+      # - RABBITMQ_PASSWORD=adminrabbit
+      - RABBITMQ_PLUGINS=rabbitmq_mqtt
+      - RABBITMQ_LOGS=-
+      - RABBITMQ_CONF_FILE=/rabbitmq/rabbitmq.conf
+    volumes:
+      - rabbitmq_data:/bitnami/rabbitmq/mnesia
+      - ${PWD}/config/rabbitmq/rabbitmq.conf:/rabbitmq/rabbitmq.conf
+    healthcheck:
+      test: [ "CMD", "rabbitmq-diagnostics", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  rabbitmq_data:
+    driver: local
