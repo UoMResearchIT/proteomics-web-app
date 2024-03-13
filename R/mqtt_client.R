@@ -6,14 +6,15 @@
 library(jsonlite)
 library(processx)
 
-source("on_message.R")
+source("R/on_message.R")
 
+passwd <- readLines("config/.secret_passwd")
 # Start MQTT client
 mqtt_client <- process$new(
   "mosquitto_sub",
   args = c(
-    "-u", "user",
-    "-P", "bitnami",
+    "-u", "proteinBASE",
+    "-P", passwd,
     "-t", "#",
     "-F", '{"date":"@Y-@m-@d","time":"@H:@M:@S","topic":"%t","payload":%p}'
   ),

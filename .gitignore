@@ -1,6 +1,6 @@
 data/*
 !data/content/
-protometrics_app/app1.R
 .Rproj.user
 .Rhistory
 .RData
+.secret*

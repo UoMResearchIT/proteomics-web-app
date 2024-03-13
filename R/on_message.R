@@ -6,7 +6,7 @@
 # Libraries
 library(jsonlite)
 
-source(data_preprocessing)
+source("R/data_preprocessing.R")
 
 # Function to process messages
 process_message <- function(message) {

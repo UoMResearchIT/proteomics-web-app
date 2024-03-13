@@ -19,11 +19,9 @@ services:
     restart: unless-stopped
     ports:
       - '1883:1883'
+      - '15672:15672'
     environment:
-      # - RABBITMQ_SECURE_PASSWORD=yes
-      # - RABBITMQ_USERNAME=adminrabbit
-      # - RABBITMQ_PASSWORD=adminrabbit
-      - RABBITMQ_PLUGINS=rabbitmq_mqtt
+      - RABBITMQ_PLUGINS=rabbitmq_mqtt, rabbitmq_management
       - RABBITMQ_LOGS=-
       - RABBITMQ_CONF_FILE=/rabbitmq/rabbitmq.conf
     volumes:

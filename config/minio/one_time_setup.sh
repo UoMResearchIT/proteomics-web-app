@@ -6,8 +6,8 @@
 # If you are setting up for the first time, then run:
 #   ./one_time_setup.sh -S
 
-username=user
-password=bitnami
+username=proteinBASE
+password=$(cat .secret_passwd)
 topics=("raw-data" "datasets" "heatmaps" "pcaplots" "dataset-info" "content")
 
 usage() {
