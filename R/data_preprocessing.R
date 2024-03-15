@@ -6,19 +6,39 @@ library(QFeatures)
 library(tidyverse)
 library(openxlsx)
 library(readxl)
-library(tidyr)
-library(SummarizedExperiment)
+# library(tidyr)
+# library(SummarizedExperiment)
+library(dplyr)
+
 
 #### Full pre-processing pipeline ####
-preprocess_data <- function(raw_data_path, dataset_name = "") {
+preprocess_data <- function(raw_data_path = "", dataset_name = "", dataset_path = "") {
+  # This function triggers the full data pre-processing pipeline.
+  # To go from the raw txt file with the data, provide the `raw_data_path`.
+  # The `dataset_name` is optional, and it is used to name the output files.
+  # To skip the data preparation, use `dataset_path` instead of `raw_data_path`.
+
   # Set paths
-  data_path <- "/tmp/"
+  data_path <- "data/"
   if (dataset_name == "") {
     dataset_name <- gsub(".txt", "", basename(raw_data_path))
   }
-  dataset_path <- paste(data_path, "datasets/",
-                        dataset_name, ".xlsx",
-                        sep = "")
+  if (dataset_path == "") {
+    prepare_dataset <- TRUE
+    dataset_path <- paste(data_path, "datasets/",
+                          dataset_name, ".xlsx",
+                          sep = "")
+  } else {
+    prepare_dataset <- FALSE
+    dataset_name <- gsub(".xlsx", "", basename(dataset_path))
+  }
+  if (dirname(dataset_path) != paste(data_path, "datasets", sep = "")) {
+    old_path=dataset_path
+    dataset_path <- paste(data_path, "datasets/",
+                          dataset_name, ".xlsx",
+                          sep = "")
+    system(paste("cp", old_path, dataset_path))
+  }
   pca_data_path <- paste(data_path, "pcaplots/",
                          dataset_name, "_pca.xlsx",
                          sep = "")
@@ -26,13 +46,16 @@ preprocess_data <- function(raw_data_path, dataset_name = "") {
                          dataset_name, "_heatmap.xlsx",
                          sep = "")
   files <- c(dataset_path, pca_data_path, heatmaps_path)
+
   # Make sure directories exist
   for (file in files){
     dir.create(dirname(file), recursive = TRUE, showWarnings = FALSE)
   }
 
   # Prepare dataset
-  prepare_dataset(raw_data_path, dataset_path)
+  if (prepare_dataset) {
+    prepare_dataset(raw_data_path, dataset_path)
+  }
 
   # Load protein data
   protein_data <- tryCatch({
@@ -49,8 +72,13 @@ preprocess_data <- function(raw_data_path, dataset_name = "") {
   heatmap_data(protein_data, heatmaps_path)
 }
 
+
 #### Generates dataset from raw txt ####
 prepare_dataset <- function(raw_data_path, dataset_path) {
+  # This function reads the raw txt file and prepares it as protein data.
+  # The `raw_data_path` is the path to the raw txt file with the data.
+  # The `dataset_path` is the path to save the prepared dataset.
+
   peptides <- read.delim(raw_data_path)
   # Identify columns with quantitative expression values
   ecols <- grep("Intensity.", names(peptides))
@@ -121,8 +149,13 @@ prepare_dataset <- function(raw_data_path, dataset_path) {
   )
 }
 
+
 #### PCA plot ####
 pca_data <- function(protein_data, pca_data_path) {
+  # This function prepares the protein data for PCA plot.
+  # The `protein_data` is the already loaded and prepared protein data.
+  # The `pca_data_path` is the output file path.
+
   protein_pca <- protein_data |>
     dplyr::select_if(is.numeric)
   # Identify and remove rows with missing values
@@ -138,8 +171,13 @@ pca_data <- function(protein_data, pca_data_path) {
                        rowNames = TRUE, overwrite = TRUE)
 }
 
+
 #### Heatmap plot ####
 heatmap_data <- function(protein_data, heatmaps_path) {
+  # This function prepares the protein data for Heatmap plots.
+  # The `protein_data` is the already loaded and prepared protein data.
+  # The `heatmaps_path` is the output file path.
+
   protein_heatmap <- protein_data
   # Handle missing values in the data set
   protein_heatmap$nZero <- rowSums(is.na(

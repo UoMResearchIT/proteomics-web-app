@@ -155,11 +155,11 @@ make_sub_heatmap <- function(data, heatmap_colors){
 #### TAB 3 ####
 bar_plot <- function(gene_dropdown, df){
   ## TODO: Sort out Warning: Removed x rows containing missing values
-  if (!(gene_dropdown %in% df$gene.names)) {
+  if (!(gene_dropdown %in% df$Gene)) {
     return()
   }
   df.plot <- df |>
-    filter(gene.names == gene_dropdown) |>
+    filter(Gene == gene_dropdown) |>
     mutate(experiment_type = str_extract(experiment, "[A-Z]+")) |>
     filter(!is.na(expression))
   p <- ggplot(data = df.plot, aes(x = experiment, y = expression))
@@ -180,11 +180,11 @@ bar_plot <- function(gene_dropdown, df){
   return(p)
 }
 box_plot <- function(gene_dropdown, df){
-  if (!(gene_dropdown %in% df$gene.names)) {
+  if (!(gene_dropdown %in% df$Gene)) {
     return()
   }
   df.plot <- df |>
-    filter(gene.names == gene_dropdown) |>
+    filter(Gene == gene_dropdown) |>
     mutate(experiment_type = str_extract(experiment, "[A-Z]+")) |>
     filter(!is.na(expression))
   p <- ggplot(data = df.plot, aes(x = experiment_type, y = expression)) 
