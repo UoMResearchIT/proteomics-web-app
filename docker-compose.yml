@@ -1,7 +1,7 @@
 services:
   minio:
     image: quay.io/minio/minio
-    container_name: proteomics-minio
+    container_name: minio
     # restart: unless-stopped
     ports:
       - "9000:9000"
@@ -10,8 +10,9 @@ services:
       - MINIO_ROOT_USER=ROOTUSER
       - MINIO_ROOT_PASSWORD=CHANGEME123
     volumes:
+      - minio_s3data:/s3data
       - ${HOME}/proteomics-web-app/data:/data
-    command: server /data --console-address ":9001"
+    command: server /s3data --console-address ":9001"
 
   rabbitmq:
     image: docker.io/bitnami/rabbitmq:3.12
@@ -35,4 +36,6 @@ services:
 
 volumes:
   rabbitmq_data:
+    driver: local
+  minio_s3data:
     driver: local
