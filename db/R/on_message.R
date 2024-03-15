@@ -8,6 +8,8 @@ library(jsonlite)
 
 source("R/data_preprocessing.R")
 
+data_path <- "../app/data/"
+
 # Function to process messages
 process_message <- function(message) {
   #### Parse JSON ####
@@ -70,12 +72,12 @@ process_message <- function(message) {
     on_creation(data$payload$Key)
   }
   # Deletion event for any bucket
-  if (data$payload$EventName == "s3:ObjectRemoved:Delete") {
+  if (grepl("s3:ObjectRemoved:Delete", data$payload$EventName)) {
     on_deletion(data$payload$Key)
   }
 
   # Creation/Deletion events on raw-data dir
-  if (data$topic == "raw-data") {
+  if (data$topic == "minio/raw-data") {
     if (data$payload$EventName == "s3:ObjectCreated:Put") {
       on_raw_data_added(data$payload$Key)
     } else if (grepl("s3:ObjectRemoved:Delete", data$payload$EventName)) {
@@ -92,15 +94,15 @@ process_message <- function(message) {
 
 on_creation <- function(file) {
   system(paste("mc cp ",
-               "protein/", file,
-               " data/", file,
+               "protein/", file, " ",
+               data_path, file,
                sep = ""))
   print(paste("File: ", file, "added to shiny app data storage."))
 }
 
 on_deletion <- function(file) {
   system(paste("rm ",
-               "data/", file,
+               data_path, file,
                sep = ""))
   print(paste("File: ", file, "deleted from shiny app data storage."))
 }
@@ -110,24 +112,35 @@ on_raw_data_added <- function(file) {
   print(paste("Added raw data file: ", file_name))
   # Pre-process data
   print("Pre-processing data...")
-  files <- preprocess_data(raw_data_path = file)
+  files <- preprocess_data(raw_data_path = paste(data_path, file, sep = ""))
   # Push each file to the minio bucket
   for (file in files) {
+    print(paste("mc cp ",
+                 file, " ",
+                 "protein/", dirname(file),
+                 sep = ""))
     system(paste("mc cp ",
-                 "./data/", file,
-                 " protein/", dirname(file),
+                 file, " ",
+                 "protein/", gsub("../app/data/", "", dirname(file)),
                  sep = ""))
   }
   print("Raw data pre-processed and pushed successfully.")
 }
 on_raw_data_deleted <- function(file) {
   file_name <- gsub("raw-data/", "", file)
+  dataset_name <- gsub(".txt", "", file_name)
   print(paste("Deleted raw data file: ", file_name))
   # Delete related pre-processed data files
   print("Deleting related files...")
-  for (dir in c("datasets", "heatmaps", "pcaplots", "dataset-info")){
-    system(paste("mc rm protein/", dir, "/",
-                 file_name, "_*",
+  related_files <- list(
+    c("datasets", ".xlsx"),
+    c("heatmaps", "_heatmap.xlsx"),
+    c("pcaplots", "_pca.xlsx"),
+    c("dataset-info", "_info.md")
+  )
+  for (rel in related_files){
+    system(paste("mc rm protein/", rel[1], "/",
+                 dataset_name, rel[2],
                  sep = ""))
   }
   print("Raw data and related files deleted.")

@@ -6,11 +6,13 @@
 #
 # IMPORTANT!!
 # Before running this script generate the access keys for the minio client:
-#   Run: docker compose up minio -d
+#   Run:
+#     docker compose up minio -d
 #   Go to http://localhost:9001/access-keys and use the 'create' button.
 #   Hit 'Create' again, and then 'Download for import'.
 #   Save the file as .secret_credentials.json in config/minio/
-#   Then run this script.
+#   Then run this script:
+#    ./config/bootstrap.sh
 
 #!/bin/bash
 

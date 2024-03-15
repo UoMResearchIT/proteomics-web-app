@@ -11,7 +11,7 @@ services:
       - MINIO_ROOT_PASSWORD=CHANGEME123
     volumes:
       - minio_s3data:/s3data
-      - ${HOME}/proteomics-web-app/data:/data
+      - ${HOME}/proteomics-web-app/app/data:/data
     command: server /s3data --console-address ":9001"
 
   rabbitmq:

@@ -19,7 +19,7 @@ preprocess_data <- function(raw_data_path = "", dataset_name = "", dataset_path 
   # To skip the data preparation, use `dataset_path` instead of `raw_data_path`.
 
   # Set paths
-  data_path <- "data/"
+  data_path <- "../app/data/"
   if (dataset_name == "") {
     dataset_name <- gsub(".txt", "", basename(raw_data_path))
   }
@@ -54,10 +54,12 @@ preprocess_data <- function(raw_data_path = "", dataset_name = "", dataset_path 
 
   # Prepare dataset
   if (prepare_dataset) {
+    print("Preparing dataset...")
     prepare_dataset(raw_data_path, dataset_path)
   }
 
   # Load protein data
+  print("Loading protein data...")
   protein_data <- tryCatch({
     read_excel(dataset_path) |>
       pivot_longer(cols = !(Identifiers:Gene),
@@ -68,8 +70,12 @@ preprocess_data <- function(raw_data_path = "", dataset_name = "", dataset_path 
   })
 
   # Preprocess data for plots
+  print("Preprocessing data for pca plots...")
   pca_data(protein_data, pca_data_path)
+  print("Preprocessing data for heatmaps...")
   heatmap_data(protein_data, heatmaps_path)
+
+  return(files)
 }
 
 
