@@ -64,6 +64,7 @@ pca_plot <- function(matrix){
 generate_heatmap_colors <- function(matrix){
   x <- as.matrix(matrix)
   x.trunc <- as.vector(unique(x))
+  browser()
   x.trim <- x.trunc[x.trunc >= quantile(x.trunc, probs = 0.01, na.rm = T) &
                       x.trunc <= quantile(x.trunc, probs = 0.99, na.rm = T)]
   x.max <- which.max(x.trim)
