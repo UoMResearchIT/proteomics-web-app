@@ -1,0 +1,33 @@
+FROM r-base:latest
+
+# Install system dependencies
+RUN  <<SysDep
+    apt-get update
+    apt-get install -y libxml2-dev                              # install.packages("xml2")
+SysDep
+
+# Install minio client
+RUN  <<installMC
+    apt-get install -y wget
+    wget https://dl.min.io/client/mc/release/linux-amd64/mc
+    chmod +x mc
+    mv mc /usr/local/bin/
+installMC
+
+WORKDIR /rclient
+
+# Install required R packages
+RUN Rscript -e 'install.packages("renv")'
+COPY renv.lock .
+RUN Rscript -e 'renv::restore()'
+
+# Setup minio client
+COPY config/minio/.secret_credentials.json ./config/minio/.secret_credentials.json
+RUN mc alias import protein ./config/minio/.secret_credentials.json
+
+# Copy R code
+COPY R/ .
+COPY config/.secret_passwd ./config/.secret_passwd
+
+# Start the mqtt client
+CMD ["Rscript", "-e", "source('R/mqtt_client.R'); run_mqtt_client()"]

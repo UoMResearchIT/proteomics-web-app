@@ -34,6 +34,18 @@ services:
       timeout: 5s
       retries: 5
 
+  rclient:
+    build:
+      context: .
+      dockerfile: Dockerfile.rclient
+    container_name: rclient
+    restart: unless-stopped
+    volumes:
+      - ${HOME}/proteomics-web-app/app/data:/data
+    depends_on:
+      - minio
+      - rabbitmq
+
 volumes:
   rabbitmq_data:
     driver: local
