@@ -8,7 +8,7 @@ library(openxlsx)
 library(readxl)
 # library(tidyr)
 # library(SummarizedExperiment)
-library(dplyr)
+# library(dplyr)
 
 
 #### Full pre-processing pipeline ####
@@ -61,10 +61,7 @@ preprocess_data <- function(raw_data_path = "", dataset_name = "", dataset_path 
   # Load protein data
   print("Loading protein data...")
   protein_data <- tryCatch({
-    read_excel(dataset_path) |>
-      pivot_longer(cols = !(Identifiers:Gene),
-                   names_to = "experiment",
-                   values_to = "expression")
+    read_excel(dataset_path)
   }, error = function(e) {
     message("Error reading the Excel file:", conditionMessage(e))
   })
@@ -73,6 +70,10 @@ preprocess_data <- function(raw_data_path = "", dataset_name = "", dataset_path 
   print("Preprocessing data for pca plots...")
   pca_data(protein_data, pca_data_path)
   print("Preprocessing data for heatmaps...")
+  protein_data <- protein_data |>
+    pivot_longer(cols = !(Identifiers:Gene),
+                 names_to = "experiment",
+                 values_to = "expression")
   heatmap_data(protein_data, heatmaps_path)
 
   return(files)

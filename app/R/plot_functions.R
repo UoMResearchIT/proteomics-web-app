@@ -1,6 +1,7 @@
 #### Load libraries ####
 library(ggplot2)
 library(mixOmics)
+library(stringr)
 
 #### Settings ####
 font_family <- 'sans'

@@ -55,7 +55,7 @@ app_server <- function(input, output, session) {
   data <- reactive({
     req(input$dataset)
     excel_ok <- tryCatch({
-      read_excel(paste0("data/datasets/", input$dataset, ".xlsx"))[, -1] |>
+      read_excel(paste0("data/datasets/", input$dataset, ".xlsx")) |>
         pivot_longer(cols = !(Identifiers:Gene),
                      names_to = "experiment",
                      values_to = "expression")
@@ -80,17 +80,14 @@ app_server <- function(input, output, session) {
     }
   })
   output$dataset_info <- renderUI(includeMarkdown(dataset_info()))
-  # The histogram is currently using temporary fixed data. It is pre-processed
-  # specifically to make a heatmap.
-  # TODO: Pre-processing of data should happen within app so it can be applied
-  # to any selected dataset.
+
   ht_colors <- reactiveVal(NULL)
   heatmap_data <- reactive({
     req(input$dataset)
     file_path <- paste0("data/heatmaps/", input$dataset,
                         "_heatmap.xlsx", sep = "")
     excel_ok <- tryCatch({
-      openxlsx::read.xlsx(file_path, sheet = 1, rowNames = TRUE)
+      openxlsx::read.xlsx(file_path, sheet = 1)
     }, error = function(e) {
       message("Error reading the heatmap file:", conditionMessage(e))
       showNotification(
@@ -107,6 +104,7 @@ app_server <- function(input, output, session) {
     )
     return(excel_ok)
   })
+
   pca_data <- reactive({
     req(input$dataset)
     file_path <- paste0(
