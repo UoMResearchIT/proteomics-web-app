@@ -72,6 +72,17 @@ services:
       - minio
       - rabbitmq
 
+  shinyapp:
+    build:
+      context: ../app
+      dockerfile: Dockerfile.shinyapp
+    container_name: pB-shinyapp
+    restart: unless-stopped
+    ports:
+      - '5678:5678'
+    volumes:
+      - ${HOME}/proteomics-web-app/app/data:/app/data
+
 volumes:
   rabbitmq_data:
     driver: local
