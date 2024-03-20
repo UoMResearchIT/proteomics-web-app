@@ -72,8 +72,19 @@ app_server <- function(input, output, session) {
   dataset_info <- reactive({
     req(input$dataset)
     #find md info file in data/dataset-info
-    file_path <- paste0("data/dataset-info/", input$dataset, ".md", sep = "")
-    if (file.exists(file_path)) {
+    file_paths <- c(
+      paste0("data/dataset-info/", input$dataset, ".md", sep = ""),
+      paste0("data/dataset-info/", input$dataset, "_info.md", sep = ""),
+      paste0("data/dataset-info/", input$dataset, "-info.md", sep = "")
+    )
+    file_path <- NULL
+    for (path in file_paths) {
+      if (file.exists(path)) {
+        file_path <- path
+        break
+      }
+    }
+    if (!is.null(file_path)) {
       return(file_path)
     } else {
       return(paste("Info for dataset", input$dataset, "not available."))
