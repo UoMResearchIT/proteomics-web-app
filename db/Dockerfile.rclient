@@ -39,6 +39,7 @@ installMC
 
 # Setup minio client
 COPY config/minio/.secret_credentials.json ./config/minio/.secret_credentials.json
+RUN sed -i 's#localhost#minio#g' config/minio/.secret_credentials.json
 RUN mc alias import protein ./config/minio/.secret_credentials.json
 
 # Setup mmosquitto
