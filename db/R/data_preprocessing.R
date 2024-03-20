@@ -1,14 +1,7 @@
 #### Load libraries ####
-library(MSnbase)
-library(msqrob2)
-library(reshape2)
-library(QFeatures)
-library(tidyverse)
-library(openxlsx)
+library(tidyr)
 library(readxl)
-# library(tidyr)
-# library(SummarizedExperiment)
-# library(dplyr)
+library(SummarizedExperiment)
 
 
 #### Full pre-processing pipeline ####
