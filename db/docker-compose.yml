@@ -41,7 +41,7 @@ services:
     container_name: rclient
     restart: unless-stopped
     volumes:
-      - ${HOME}/proteomics-web-app/app/data:/data
+      - ${HOME}/proteomics-web-app/app/data:/app/data
     depends_on:
       - minio
       - rabbitmq

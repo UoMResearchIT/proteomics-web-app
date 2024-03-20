@@ -1,32 +1,51 @@
-FROM r-base:latest
+FROM ubuntu:22.04
 
 # Install system dependencies
-RUN  <<SysDep
-    apt-get update
-    apt-get install -y libxml2-dev                              # install.packages("xml2")
-SysDep
+# RUN  <<SysDep
+RUN apt-get update
+RUN apt-get install -y wget
+RUN apt-get install -y apt-utils
+# SysDep
+
+ENV DEBIAN_FRONTEND=noninteractive
+# # RUN  <<RSysDep
+RUN apt-get install -y -m curl libgbm-dev libcurl4-openssl-dev  libssl-dev libfontconfig1-dev libxml2-dev libharfbuzz-dev libfribidi-dev libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev
+RUN apt-get install -y libasound2.dev
+# # RSysDep
+
+WORKDIR /rclient
+
+# Install R
+ENV R_VERSION=4.3.3
+RUN apt-get -o Acquire::Retries=100 -y install gdebi-core
+RUN curl -O https://cdn.rstudio.com/r/ubuntu-2204/pkgs/r-${R_VERSION}_1_amd64.deb
+RUN gdebi -n r-${R_VERSION}_1_amd64.deb
+RUN rm r-${R_VERSION}_1_amd64.deb
+RUN ln -s /opt/R/${R_VERSION}/bin/R /usr/local/bin/R
+RUN ln -s /opt/R/${R_VERSION}/bin/Rscript /usr/local/bin/Rscript
+
+# Install required R packages
+RUN Rscript -e 'install.packages("renv",repos="https://cloud.r-project.org")'
+RUN apt-get install -y cmake
+COPY renv.lock .
+RUN Rscript -e 'renv::restore()'
 
 # Install minio client
 RUN  <<installMC
-    apt-get install -y wget
     wget https://dl.min.io/client/mc/release/linux-amd64/mc
     chmod +x mc
     mv mc /usr/local/bin/
 installMC
 
-WORKDIR /rclient
-
-# Install required R packages
-RUN Rscript -e 'install.packages("renv")'
-COPY renv.lock .
-RUN Rscript -e 'renv::restore()'
-
 # Setup minio client
 COPY config/minio/.secret_credentials.json ./config/minio/.secret_credentials.json
 RUN mc alias import protein ./config/minio/.secret_credentials.json
 
+# Setup mmosquitto
+RUN apt-get install -y mosquitto-clients
+
 # Copy R code
-COPY R/ .
+COPY R/ ./R/
 COPY config/.secret_passwd ./config/.secret_passwd
 
 # Start the mqtt client
