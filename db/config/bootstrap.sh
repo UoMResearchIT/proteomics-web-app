@@ -40,8 +40,7 @@ if [ $timeout -eq 0 ]; then
     echo "RabbitMQ service did not become ready within the expected time."
     exit 1
 fi
-echo "."
-sleep 2
+
 cd db/config
 # Add mc alias
 mc alias import protein ./minio/.secret_credentials.json
