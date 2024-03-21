@@ -37,6 +37,14 @@ Test docker is installed by running:
 ```
 docker run hello-world
 ```
+At this point, you can also download the docker images needed for deployment:
+```
+docker pull  ghcr.io/uomresearchit/pb-rclient:latest
+docker pull ghcr.io/uomresearchit/pb-shinyapp:latest
+docker pull docker.io/bitnami/rabbitmq:3.12
+docker pull quay.io/minio/minio:latest
+docker pull jc21/nginx-proxy-manager:latest
+```
 
 ### One time setup
 Navigate to the cloned repo directory, and setup minio for the first time:
@@ -98,3 +106,36 @@ Websockets Support: On
 Traffic should now be forwarded to the right frontentd for each domain.
 
 ### SSL certificates
+
+### Debugging
+
+#### Logs
+An important access point for debugging the site is the docker compose logs.
+
+You can access all of the logs together with:
+```
+docker compose logs -f
+```
+where the -f option follows the logs live.
+
+Alternatively, you can look at the logs of each service (or a selected group) with
+```
+docker compose logs -f <service name>
+```
+The services are as follows:
+
+- **shinyapp**: The shiny app, serving the public site.
+- **minio**: The minio service, serving the front end for the database.
+- **rclient**: An mqtt client, listening for events in the minio site, in charge of the data pre-processing workflow.
+- **rabbitmq**: The message broker used to connect the minio and rclient services.
+- **proxy**: The nginx proxy manager, in charge of the domain routing.
+
+#### Docker exec
+
+Another useful tool for debugging is the docker exec command, which allows you to jump inside of one of the running containers.
+
+For example, to jump inside the shinyapp container, you can run:
+```
+docker exec -it pb-shinyapp bash
+```
+This will open a bash shell inside the container, where you can run commands to debug the app.
