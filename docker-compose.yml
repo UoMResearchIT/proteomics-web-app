@@ -8,7 +8,7 @@ services:
     command: tunnel --no-autoupdate run
 
   proxy:
-    image: 'jc21/nginx-proxy-manager:latest'
+    image: jc21/nginx-proxy-manager:latest
     container_name: pB-proxy
     depends_on:
       - cloudflared
@@ -26,7 +26,7 @@ services:
       timeout: 3s
 
   minio:
-    image: quay.io/minio/minio
+    image: quay.io/minio/minio:latest
     container_name: pB-minio
     restart: unless-stopped
     ports:
@@ -61,9 +61,10 @@ services:
       retries: 5
 
   rclient:
-    build:
-      context: ./db
-      dockerfile: Dockerfile.rclient
+    image: ghcr.io/uomresearchit/pb-rclient:latest
+    # build:
+    #   context: ./db
+    #   dockerfile: Dockerfile.rclient
     container_name: pB-rclient
     restart: unless-stopped
     volumes:
@@ -75,9 +76,10 @@ services:
       - rabbitmq
 
   shinyapp:
-    build:
-      context: ./app
-      dockerfile: Dockerfile.shinyapp
+    image: ghcr.io/uomresearchit/pb-shinyapp:latest
+    # build:
+    #   context: ./app
+    #   dockerfile: Dockerfile.shinyapp
     container_name: pB-shinyapp
     restart: unless-stopped
     ports:
