@@ -9,6 +9,9 @@ on:
 jobs:
   build-push-shinyapp:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     env:
       CONTAINER_NAME: pb-shinyapp
     steps:
