@@ -22,7 +22,8 @@ jobs:
       - name: Build
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./db/
+          file: db/Dockerfile.rclient
           load: true
           tags: ${{ env.CONTAINER_NAME }}:testing
         
