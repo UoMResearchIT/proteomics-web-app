@@ -1,3 +1,6 @@
-data/
-protometrics_app/app1.R
+app/data/*
+!app/data/content/
 .Rproj.user
+.Rhistory
+.RData
+.secret*
