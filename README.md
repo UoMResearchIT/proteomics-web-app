@@ -1,61 +1,100 @@
-# proteomics-web-app
-FBMH project
+# proteinBASE
 
-RSE : Emma Simpson
+The proteinBASE site has two parts:
+ - The app: This has public access, and displays datasets and pre-configured plots.
+ This is a shiny-app, and it is contained in the `app` directory (except for the data).
 
-RSE Lead : Andrew Jerrison
+ - The database: Restricted access to admin users.
+ The front end is managed by minio, and serves as a portal to upload the datasets.
+ Uploading a raw dataset triggers a workflow for pre-processing the data.
+ Once the data is pre-processed, it is copied to the website's database, and becomes available to users.
 
-Academics : Mychel Morais and Rachel Lennon
+## Deploying the shiny app
+The service is orquestrated using docker-compose, so the server must have a working installation of docker.
 
-## To run shiny app
-Open the proteomics_app.Rproj file in Rstudio. Renv should bootstrap itself; you may need to run renv::restore() to install the required packages.
+### Clone this repository
+You will need git installed to clone this repo.
+```
+sudo apt update
+sudo apt upgrade -y
+sudo apt install -y git
+git clone https://github.com/UoMResearchIT/proteomics-web-app.git proteinBASE
+```
 
-Open app.R and use the 'Run App' button in the RStudio toolbar to launch the app.
+### Installing docker
+On an ubuntu system, you can install docker and docker compose using this [convinience script](https://docs.docker.com/engine/install/ubuntu/#install-using-the-convenience-script), in summary, run:
+```
+sudo apt update
+sudo apt upgrade -y
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh ./get-docker.sh
+sudo groupadd docker
+sudo usermod -aG docker $USER
+newgrp docker
+rm get-docker.sh
+```
+Test docker is installed by running:
+```
+docker run hello-world
+```
 
-## Tour of the app
-Title: 'Lennon Lab Proteomic data archive'
+### One time setup
+Navigate to the cloned repo directory, and setup minio for the first time:
+```
+cd proteinBASE
+docker compose up minio proxy -d
+```
+#### Minio keys
+On a browser, use the url of the machine serving the site to configure the minio keys.
+For example, if the ip is 10.20.30.40, in a browser go to
+```
+http://10.20.30.40:9001/access-keys
+```
+Log in using the temporary credentials
+```
+u: ROOTUSER
+p: CHANGEME123
+```
+Update your credentials.
+Once logged in, use the 'create' button.
+Hit 'Create' again, and then 'Download for import'.
 
-This is set in app.R line 16 titlePanel
+Copy the downloaded file to the server, for example using scp, as `.secret_credentials.json` in `db/config/minio/`
+```
+scp ~/Downloads/credentials.json user@10.20.30.40:~/proteinBASE/db/config/minio/.secret_credentials.json
+```
 
-Choose a dataset: - the items in this dropdown are from the contents of ./data (only .xlsx files are listed)
+Once the keys are in the right place, you can use the bootstrap script:
+```
+./db/config/bootstrap.sh
+```
 
-Gene: - the items in this dropdown are from the contents of the choosen dataset
+#### Proxy setting
+On a browser, use the url of the machine serving the site to configure the proxy.
+For example, if the ip is 10.20.30.40, in a browser go to
+```
+http://ip_address_here:81
+```
+Log in using the temporary credentials
+```
+u: admin@example.com
+p: changeme
+```
+Update your credentials.
+On the menu, click on Hosts -> Proxy Hosts, and then click on  "Add Proxy Host".
+Fill in the details for each domain:
+```
+Name: proteinBASE.manchester.ac.uk
+Forward Hostname: pB-shinyapp
+Forward Port: 5678
+Websockets Support: On
+```
+```
+Name: upload.proteinBASE.manchester.ac.uk
+Forward Hostname: pB-minio
+Forward Port: 9001
+Websockets Support: On
+```
+Traffic should now be forwarded to the right frontentd for each domain.
 
-Tabs - BoxPlot, PCA, HeatMap, Correlation
-
-The code for these plots is in plot_functions.R
-
-## Description of .R files
-
-### app.R
-Contains the ui and server logic and runs shinyApp(ui, server).
-
-ui - determines the app layout
-
-server - contains the reactive logic and functionality of the app
-
-### plot_functions.R
-Contains the business logic of the app, code for making the plots. 
-
-### ./data
-Place all datasets here. They should be .xlsx files and follow the same format as the cell_prot_final and prot_final demo files. The name to be displayed in the dropdown menu of 'Choose a dataset' should be the same as the name of the file. 
-
-## How to deploy app on UoM Shiny Server
-
-https://github.com/UoMResearchIT/r-shinysender/#usage
-
-## Ideas to make web site have a login feature
-- Add an authentication layer to your shiny apps https://paulc91.github.io/shinyauthr/
-
-- Google authentication types for R https://code.markedmondson.me/googleAuthR/articles/google-authentication-types.html
-
-- Only allow users with a University of Manchester account to access the server - not sure if this is possible. 
-
-This all needs discussion with WADS team. And consideration needs to be given to the security risks of storing database of user details. 
-
-## Idea to refactor code for more robust deployment
-https://engineering-shiny.org/index.html
-
-
-
-
+### SSL certificates
