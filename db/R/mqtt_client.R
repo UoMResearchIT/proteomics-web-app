@@ -26,7 +26,6 @@ run_mqtt_client <- function() {
       stdout = "|"
     )
     Sys.sleep(1)
-    print(mqtt_client$is_alive())
     if (mqtt_client$is_alive()) {
       print("MQTT client connected successfully, listening for messages...")
       retry <- FALSE
@@ -35,10 +34,20 @@ run_mqtt_client <- function() {
     }
   }
 
+  consecutive_not_alive <- 0
   # Listen for messages
-  while (mqtt_client$is_alive()) {
+  while (TRUE) {
     # if (!exists("i")) { i <- 0 }; i <- i + 1; print(paste(i, "Waiting for messages..."))
     tryCatch({
+      if (!mqtt_client$is_alive()) {
+        consecutive_not_alive <- consecutive_not_alive + 1
+      } else {
+        consecutive_not_alive <- 0
+      }
+      if (consecutive_not_alive >= 10) {
+        print("Lost MQTT client connection, exiting...")
+        break
+      }
       # Read line from MQTT client
       lines <- mqtt_client$read_output_lines()
 

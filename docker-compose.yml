@@ -68,6 +68,8 @@ services:
     restart: unless-stopped
     volumes:
       - ${PWD}/app/data:/app/data
+      - ${PWD}/db/config/.secret_passwd:/rclient/config/.secret_passwd
+      - ${PWD}/db/config/minio/.secret_credentials.json:/rclient/config/minio/.secret_credentials.json
     depends_on:
       - minio
       - rabbitmq

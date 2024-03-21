@@ -37,17 +37,17 @@ RUN  <<installMC
     mv mc /usr/local/bin/
 installMC
 
-# Setup minio client
-COPY config/minio/.secret_credentials.json ./config/minio/.secret_credentials.json
-RUN sed -i 's#localhost#minio#g' config/minio/.secret_credentials.json
-RUN mc alias import protein ./config/minio/.secret_credentials.json
-
 # Setup mmosquitto
 RUN apt-get install -y mosquitto-clients
 
 # Copy R code
 COPY R/ ./R/
-COPY config/.secret_passwd ./config/.secret_passwd
 
-# Start the mqtt client
-CMD ["Rscript", "-e", "source('R/mqtt_client.R'); run_mqtt_client()"]
+# Setup minio client and start MQTT client
+ENTRYPOINT /bin/bash -c "\
+  sed -e 's#localhost#minio#g' /rclient/config/minio/.secret_credentials.json > \
+  /rclient/config/minio/.secret_credentials_docker.json && \
+  mc alias import protein /rclient/config/minio/.secret_credentials_docker.json && \
+  echo 'finished ENTRYPOINT' && \
+  echo 'Starting MQTT client' && \
+  Rscript -e \"source('R/mqtt_client.R'); run_mqtt_client()\""
