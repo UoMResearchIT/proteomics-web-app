@@ -14,6 +14,8 @@ jobs:
       packages: write
     env:
       CONTAINER_NAME: pb-shinyapp
+      CONTEXT: ./app/
+      DOCKERFILE: app/Dockerfile.shinyapp
     steps:
 
       - name: Checkout
@@ -22,13 +24,23 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Cache Docker layers
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
       - name: Build
         uses: docker/build-push-action@v5
         with:
-          context: ./app/
-          file: app/Dockerfile.shinyapp
+          context: ${{ env.CONTEXT }}
+          file: ${{ env.DOCKERFILE }}
           load: true
           tags: ${{ env.CONTAINER_NAME }}:testing
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache
         
       # - name: Test
       #   run: |
