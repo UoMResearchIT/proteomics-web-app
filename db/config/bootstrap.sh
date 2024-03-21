@@ -26,7 +26,7 @@ sed -i 's#9001/api/v1/service-account-credentials#9000#g' minio/.secret_credenti
 # Generate random password
 cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 10 | head -n 1 > .secret_passwd
 # Launch docker compose newtork
-cd ../
+cd ../../
 docker compose up -d
 # Wait for RabbitMQ to be ready
 echo "Waiting for rabbitmq service..."
@@ -42,7 +42,7 @@ if [ $timeout -eq 0 ]; then
 fi
 echo "."
 sleep 2
-cd config
+cd db/config
 # Add mc alias
 mc alias import protein ./minio/.secret_credentials.json
 # Configure rabbitmq username and password

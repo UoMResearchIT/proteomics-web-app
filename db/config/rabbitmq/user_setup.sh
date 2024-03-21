@@ -9,6 +9,6 @@ set -e
 username=proteinBASE
 password=$(cat .secret_passwd)
 
-docker exec rabbitmq rabbitmqctl add_user $username $password
-docker exec rabbitmq rabbitmqctl set_user_tags $username administrator
-docker exec rabbitmq rabbitmqctl set_permissions -p / $username  ".*" ".*" ".*"
+docker exec pB-rabbitmq rabbitmqctl add_user $username $password
+docker exec pB-rabbitmq rabbitmqctl set_user_tags $username administrator
+docker exec pB-rabbitmq rabbitmqctl set_permissions -p / $username  ".*" ".*" ".*"

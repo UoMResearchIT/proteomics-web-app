@@ -4,7 +4,7 @@ services:
     container_name: pB-cloudflared
     restart: unless-stopped
     environment:
-      - TUNNEL_TOKEN=not-the-real-token
+      - TUNNEL_TOKEN=eyJhIjoiZTk3ZjM1OGM3NTc5ZjdkYjJlNDVmNTI2OTE1MzgxMzYiLCJ0IjoiZDNiZWUxM2MtZWI3Ny00ZDY4LTllMTMtYzRlZGM5Yjg4NjFmIiwicyI6IlpHTmpPVEF6TXpNdFpEUTJZeTAwTURsakxXSXhZak10WldZNE16UTROemxsT0ROayJ9
     command: tunnel --no-autoupdate run
 
   proxy:
@@ -28,7 +28,7 @@ services:
   minio:
     image: quay.io/minio/minio
     container_name: pB-minio
-    # restart: unless-stopped
+    restart: unless-stopped
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -37,7 +37,7 @@ services:
       - MINIO_ROOT_PASSWORD=CHANGEME123
     volumes:
       - minio_s3data:/s3data
-      - ${HOME}/proteomics-web-app/app/data:/data
+      - ${PWD}/app/data:/data
     command: server /s3data --console-address ":9001"
 
   rabbitmq:
@@ -53,7 +53,7 @@ services:
       - RABBITMQ_CONF_FILE=/rabbitmq/rabbitmq.conf
     volumes:
       - rabbitmq_data:/bitnami/rabbitmq/mnesia
-      - ${PWD}/config/rabbitmq/rabbitmq.conf:/rabbitmq/rabbitmq.conf
+      - ${PWD}/db/config/rabbitmq/rabbitmq.conf:/rabbitmq/rabbitmq.conf
     healthcheck:
       test: [ "CMD", "rabbitmq-diagnostics", "ping" ]
       interval: 10s
@@ -62,26 +62,26 @@ services:
 
   rclient:
     build:
-      context: .
+      context: ./db
       dockerfile: Dockerfile.rclient
     container_name: pB-rclient
     restart: unless-stopped
     volumes:
-      - ${HOME}/proteomics-web-app/app/data:/app/data
+      - ${PWD}/app/data:/app/data
     depends_on:
       - minio
       - rabbitmq
 
   shinyapp:
     build:
-      context: ../app
+      context: ./app
       dockerfile: Dockerfile.shinyapp
     container_name: pB-shinyapp
     restart: unless-stopped
     ports:
       - '5678:5678'
     volumes:
-      - ${HOME}/proteomics-web-app/app/data:/app/data
+      - ${PWD}/app/data:/app/data
 
 volumes:
   rabbitmq_data:
