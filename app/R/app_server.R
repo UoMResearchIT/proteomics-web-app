@@ -265,12 +265,12 @@ app_server <- function(input, output, session) {
 
   #### Download buttons ####
   shinyjs::hide("subheat_save_as-save_as_button")
-  save_as_Server("pca_save_as", input$dataset, .pca_plot(), "PCA")
-  save_as_Server("heatmap_save_as", input$dataset, .heatmap_plot(),
+  save_as_server("pca_save_as", input$dataset, .pca_plot(), "PCA")
+  save_as_server("heatmap_save_as", input$dataset, .heatmap_plot(),
                  "HeatMap")
-  save_as_Server("subheat_save_as", input$dataset, .subheat_plot(),
+  save_as_server("subheat_save_as", input$dataset, .subheat_plot(),
                  "SubHeatMap")
-  save_as_Server("bar_save_as", input$dataset, .bar_plot(), "Bar")
-  save_as_Server("box_save_as", input$dataset, .box_plot(), "Box")
+  save_as_server("bar_save_as", input$dataset, .bar_plot(), "Bar")
+  save_as_server("box_save_as", input$dataset, .box_plot(), "Box")
 
 }
