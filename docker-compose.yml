@@ -10,12 +10,12 @@ services:
   proxy:
     image: jc21/nginx-proxy-manager:latest
     container_name: pB-proxy
-    depends_on:
-      - cloudflared
+    # depends_on:
+    #   - cloudflared
     restart: unless-stopped
     ports:
-      # - '80:80' # Public HTTP Port
-      # - '443:443' # Public HTTPS Port
+      - '80:80' # Public HTTP Port
+      - '443:443' # Public HTTPS Port
       - '81:81' # Admin Web Port2
     volumes:
       - nginx-proxy:/data
