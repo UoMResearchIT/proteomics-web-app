@@ -21,7 +21,7 @@ set -e
 # Change the current directory to the directory of the script
 cd "$(dirname "$0")"
 # Fix secret credentials url. Should be "http://localhost:9000"
-sed -i 's#9001/api/v1/service-account-credentials#9000#g' minio/.secret_credentials.json
+sed -i 's#http.*api/v1/service-account-credentials#http://localhost:9000#g' minio/.secret_credentials.json
 
 # Generate random password
 cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 10 | head -n 1 > .secret_passwd

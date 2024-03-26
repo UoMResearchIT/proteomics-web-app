@@ -47,9 +47,16 @@ docker pull jc21/nginx-proxy-manager:latest
 ```
 
 ### One time setup
-Navigate to the cloned repo directory, and setup minio for the first time:
+Navigate to the cloned repo directory.
 ```
 cd proteinBASE
+```
+Create a password for the root user of minio. You can generate a random one with:
+```
+echo "MINIO_ROOT_PASSWORD=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 10 | head -n 1)" > ./db/config/minio/.secret_minio_passwd
+```
+Now we can spin up minio for the first time:
+```
 docker compose up minio proxy -d
 ```
 #### Minio keys
@@ -58,12 +65,8 @@ For example, if the ip is 10.20.30.40, in a browser go to
 ```
 http://10.20.30.40:9001/access-keys
 ```
-Log in using the temporary credentials
-```
-u: ROOTUSER
-p: CHANGEME123
-```
-Update your credentials.
+Log in using the root user credentials ( user: ROOTUSER and the password you just generated).
+
 Once logged in, use the 'create' button.
 Hit 'Create' again, and then 'Download for import'.
 
