@@ -122,8 +122,12 @@ app_server <- function(input, output, session) {
     # Check for duplicated row_names and add a number to make unique
     duplicates <- duplicated(row_names)
     if (any(duplicates)) {
-      sequence <- ave(seq_along(row_names), row_names, FUN = function(x) seq_along(x) - 1)
-      row_names[duplicates] <- paste(row_names[duplicates], sequence[duplicates], sep = " ")
+      sequence <- ave(
+        seq_along(row_names), row_names, FUN = function(x) seq_along(x) - 1
+      )
+      row_names[duplicates] <- paste(row_names[duplicates],
+                                     sequence[duplicates],
+                                     sep = " ")
     }
     rownames(excel_ok) <- row_names
     # Calculate colors used for heatmap and subheatmap
