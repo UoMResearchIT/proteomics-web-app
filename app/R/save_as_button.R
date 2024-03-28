@@ -48,7 +48,7 @@ save_as_ui <- function(id,
       style = "display: none;",
       div(
         downloadButton(
-          NS(id,'download_button'),
+          NS(id, "download_button"),
           "Save image",
           class = "btn-info",
           style = "padding: 20px 10px;"
@@ -57,18 +57,18 @@ save_as_ui <- function(id,
       div(
         style = "display: none;",
         radioButtons(
-          NS(id,"download_format"),
+          NS(id, "download_format"),
           label = "Format:",
           choices = list("png",
-                          "pdf",
-                          "svg"),
+                         "pdf",
+                         "svg"),
           selected = "png",
           inline = TRUE
         )
       ),
       div(
         numericInput(
-          NS(id,"download_image_resolution"),
+          NS(id, "download_image_resolution"),
           label = "Resolution [dpi]",
           value = default_dpi,
           width = "120px"
@@ -77,7 +77,7 @@ save_as_ui <- function(id,
       div(
         style = "display: none;",
         numericInput(
-          NS(id,"download_image_width"),
+          NS(id, "download_image_width"),
           label = "Width [px]",
           value = default_width,
           width = "80px"
@@ -86,7 +86,7 @@ save_as_ui <- function(id,
       div(
         style = "display: none;",
         numericInput(
-          NS(id,"download_image_height"),
+          NS(id, "download_image_height"),
           label = "Height [px]",
           value = default_height,
           width = "80px"
@@ -105,14 +105,24 @@ save_as_server <- function(id,
       # Toggle this "save_as_options"
       shinyjs::toggle("save_as_options")
       # Hide all other "save_as_options"
-      sel <- paste("[id*=save_as_options]:not(#",id,"-save_as_options)",sep = "")
+      sel <- paste(
+        "[id*=save_as_options]:not(#", id, "-save_as_options)",
+        sep = ""
+      )
       shinyjs::hide(selector = sel)
       # Scroll to the bottom of the page
       shinyjs::runjs("window.scrollTo(0,document.body.scrollHeight);")
     })
     output$download_button <- downloadHandler(
       filename = function() {
-        paste(dataset_name,"_",plot_tag,"_plot.",input$download_format,sep = "")
+        paste(
+          dataset_name,
+          "_",
+          plot_tag,
+          "_plot.",
+          input$download_format,
+          sep = ""
+        )
       },
       content = function(file) {
         screen_dpi <- 72

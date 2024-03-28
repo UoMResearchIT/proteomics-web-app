@@ -106,13 +106,32 @@ app_server <- function(input, output, session) {
         type = "error", duration = 10
       )
     })
-    ht_colors(generate_heatmap_colors(excel_ok))
+    # Set row names
+    row_names <- paste(excel_ok$Gene,
+                       "   (",
+                       excel_ok$Protein,
+                       ")",
+                       sep = "")
+    # Update autocomplete choices for search bar
     updateSelectizeInput(
       session,
       "subh_gene",
-      choices = sort(unique(unlist(strsplit(rownames(excel_ok), ",")))),
+      choices = sort(unique(unlist(row_names))),
       server = TRUE
     )
+    # Check for duplicated row_names and add a number to make unique
+    duplicates <- duplicated(row_names)
+    if (any(duplicates)) {
+      sequence <- ave(
+        seq_along(row_names), row_names, FUN = function(x) seq_along(x) - 1
+      )
+      row_names[duplicates] <- paste(row_names[duplicates],
+                                     sequence[duplicates],
+                                     sep = " ")
+    }
+    rownames(excel_ok) <- row_names
+    # Calculate colors used for heatmap and subheatmap
+    ht_colors(generate_heatmap_colors(excel_ok))
     return(excel_ok)
   })
 
@@ -196,7 +215,7 @@ app_server <- function(input, output, session) {
                             verbose = FALSE,
                             calibrate = FALSE)
     sub_rows <- unlist(selection$row_index)
-    sub_cols <- unlist(selection$column_index)
+    sub_cols <- unlist(selection$column_label)
     sub_data(heatmap_data()[sub_rows, sub_cols, drop = FALSE])
     if (nrow(sub_data()) == 0 || ncol(sub_data()) == 0) {
       .subheat_plot(NULL)
