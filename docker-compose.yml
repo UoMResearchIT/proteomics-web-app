@@ -3,8 +3,8 @@ services:
     image: cloudflare/cloudflared:latest
     container_name: pB-cloudflared
     restart: unless-stopped
-    environment:
-      - TUNNEL_TOKEN=not-the-real-token
+    env_file:
+      - ${PWD}/db/config/cloudflared/.secret_tunnel_token
     command: tunnel --no-autoupdate run
 
   proxy:
