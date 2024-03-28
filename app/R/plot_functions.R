@@ -1,7 +1,11 @@
 #### Load libraries ####
 library(ggplot2)
 library(mixOmics)
+library(ComplexHeatmap)
+library(circlize)
 library(stringr)
+library(grid)
+library(dplyr)
 
 #### Settings ####
 font_family <- 'sans'
@@ -61,17 +65,16 @@ pca_plot <- function(matrix){
 }
 
 #### TAB 2 ####
-generate_heatmap_colors <- function(matrix){
-  x <- as.matrix(matrix)
+generate_heatmap_colors <- function(data){
+  x <- as.matrix(select_if(data, is.numeric))
   x.trunc <- as.vector(unique(x))
-  browser()
   x.trim <- x.trunc[x.trunc >= quantile(x.trunc, probs = 0.01, na.rm = T) &
                       x.trunc <= quantile(x.trunc, probs = 0.99, na.rm = T)]
   x.max <- which.max(x.trim)
   x.min <- which.min(x.trim)
   # Create a color function for the heatmap values
-  col_fun <- circlize::colorRamp2(c(x.trim[x.min], 0, x.trim[x.max]),
-                                  c("blue", "white", "red"),
+  col_fun <- circlize::colorRamp2(breaks = c(x.trim[x.min], 0, x.trim[x.max]),
+                                  colors = c("blue", "white", "red"),
                                   space = "sRGB")
   # Create color lists for samples and groups labels
   samples_names <- gsub("_", " ", colnames(x)) # for sample annotation
@@ -103,7 +106,7 @@ top_annotation <- function(data, heatmap_colors, legend = TRUE) {
 }
 
 make_heatmap <- function(data, heatmap_colors){
-  data_m <- as.matrix(data)
+  data_m <- as.matrix(select_if(data, is.numeric))
   set.seed(3)
   ht <- ComplexHeatmap::Heatmap(data_m,
                                 name = "P. Level",
@@ -133,8 +136,8 @@ calculate_row_fontsize <- function(n_rows) {
 }
 
 make_sub_heatmap <- function(data, heatmap_colors){
-  data_m <- as.matrix(data)
-  row_lab <- gsub(".*,\\s*", "", rownames(data_m))
+  data_m <- as.matrix(select_if(data, is.numeric))
+  row_lab <- rownames(data_m)
   row_font_size <- calculate_row_fontsize(length(row_lab))
   set.seed(3)
   ht <- ComplexHeatmap::Heatmap(data_m,
