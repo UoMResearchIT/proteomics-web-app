@@ -115,7 +115,9 @@ app_ui <- function(request) {
             #### PCA ####
             tabPanel("PCA",
               plotlyOutput("PCA_plot", width = 600, height = 500),
-              save_as_UI("pca_save_as", 600, 500)
+              div(
+                save_as_ui("pca_save_as", 600, 500)
+              ),
             ),
             #### HeatMap ####
             tabPanel("HeatMap",
@@ -145,11 +147,11 @@ app_ui <- function(request) {
                       height = 500,
                       brush = "heatmap_brush"
                     ),
-                    save_as_UI("heatmap_save_as", 250, 500),
+                    save_as_ui("heatmap_save_as", 250, 500),
                   ),
                   div(
                     uiOutput("sub_heat"),
-                    save_as_UI("subheat_save_as", 600, 500),
+                    save_as_ui("subheat_save_as", 600, 500),
                   )
                 )
               ),
@@ -160,11 +162,11 @@ app_ui <- function(request) {
                 div(class = "container",
                   div(
                     plotlyOutput("plot_bar", width = 500, height = 500),
-                    save_as_UI("bar_save_as", 500, 500)
+                    save_as_ui("bar_save_as", 500, 500)
                   ),
                   div(
                     plotlyOutput("plot_box", width = 300, height = 500),
-                    save_as_UI("box_save_as", 300, 500)
+                    save_as_ui("box_save_as", 300, 500)
                   ),
                 )
               ),

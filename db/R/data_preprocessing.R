@@ -26,7 +26,7 @@ preprocess_data <- function(raw_data_path = "", dataset_name = "", dataset_path 
     dataset_name <- gsub(".xlsx", "", basename(dataset_path))
   }
   if (dirname(dataset_path) != paste(data_path, "datasets", sep = "")) {
-    old_path=dataset_path
+    old_path <- dataset_path
     dataset_path <- paste(data_path, "datasets/",
                           dataset_name, ".xlsx",
                           sep = "")
@@ -63,11 +63,11 @@ preprocess_data <- function(raw_data_path = "", dataset_name = "", dataset_path 
   print("Preprocessing data for pca plots...")
   pca_data(protein_data, pca_data_path)
   print("Preprocessing data for heatmaps...")
+  heatmap_data(protein_data, heatmaps_path)
   protein_data <- protein_data |>
     pivot_longer(cols = !(Identifiers:Gene),
                  names_to = "experiment",
                  values_to = "expression")
-  heatmap_data(protein_data, heatmaps_path)
 
   return(files)
 }
@@ -98,13 +98,6 @@ prepare_dataset <- function(raw_data_path, dataset_path) {
   rowData(s4[[1]])$nNonZero <- rowSums(assay(s4[[1]]) > 0)
   # Replace zeroes with NA in S4 object
   s4 <- QFeatures::zeroIsNA(object = s4, i = "raw")
-  # Log2-transform peptide data
-  s4 <- QFeatures::logTransform(
-    object = s4, # S4 peptide data
-    i = "raw", # raw expression matrix
-    name = "log", # log assay name
-    base = 2
-  )
   # Remove contaminant peptides
   s4 <- QFeatures::filterFeatures(
     object = s4,
@@ -118,17 +111,24 @@ prepare_dataset <- function(raw_data_path, dataset_path) {
   filter <- rowData(s4[[1]])$Proteins %in%
     msqrob2::smallestUniqueGroups(rowData(s4[[1]])$Proteins)
   s4 <- s4[filter, , ]
-  # Normalize by median centering
+  # Normalize by quantiles
   s4 <- normalize(
     object = s4, # S4 peptide data
-    i = "log", # log expression data
+    i = "raw", # log expression data
     name = "norm", # norm assay name
-    method = "center.median" # normalization method
+    method = "quantiles" # normalization method
+  )
+  # Log2-transform peptide data #### ****** modified here
+  s4 <- QFeatures::logTransform(
+    object = s4, # S4 peptide data
+    i = "norm", # raw expression matrix
+    name = "log", # log assay name
+    base = 2
   )
   # Summarize peptide to protein
   s4 <- QFeatures::aggregateFeatures(
     object = s4, # S4 peptide data
-    i = "norm", # normalized expression data
+    i = "log", # normalized expression data
     name = "prot", # protein assay name
     fcol = "Proteins", # rowData variable for aggregation
     fun = MsCoreUtils::robustSummary, # quantitative aggregation function
