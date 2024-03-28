@@ -1,11 +1,7 @@
 #### Load libraries ####
-library(MSnbase)
-library(reshape2)
-library(QFeatures)
-library(tidyverse)
-library(openxlsx)
+library(tidyr)
 library(readxl)
-library(igraph)
+library(SummarizedExperiment)
 
 
 #### Full pre-processing pipeline ####
@@ -30,7 +26,7 @@ preprocess_data <- function(raw_data_path = "", dataset_name = "", dataset_path 
     dataset_name <- gsub(".xlsx", "", basename(dataset_path))
   }
   if (dirname(dataset_path) != paste(data_path, "datasets", sep = "")) {
-    old_path=dataset_path
+    old_path <- dataset_path
     dataset_path <- paste(data_path, "datasets/",
                           dataset_name, ".xlsx",
                           sep = "")

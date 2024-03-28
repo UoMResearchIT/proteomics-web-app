@@ -9,6 +9,18 @@ set -e
 username=proteinBASE
 password=$(cat .secret_passwd)
 
-docker exec rabbitmq rabbitmqctl add_user $username $password
-docker exec rabbitmq rabbitmqctl set_user_tags $username administrator
-docker exec rabbitmq rabbitmqctl set_permissions -p / $username  ".*" ".*" ".*"
+echo "Waiting for rabbitmqctl app..."
+timeout=30
+until $(docker exec pB-rabbitmq rabbitmqctl list_users > /dev/null 2>&1) || [ $timeout -eq 0 ]; do
+    sleep 1
+    timeout=$((timeout - 1))
+    printf '.'
+done
+if [ $timeout -eq 0 ]; then
+    echo "RabbitMQ container did not become ready within the expected time."
+    exit 1
+fi
+
+docker exec pB-rabbitmq rabbitmqctl add_user $username $password
+docker exec pB-rabbitmq rabbitmqctl set_user_tags $username administrator
+docker exec pB-rabbitmq rabbitmqctl set_permissions -p / $username  ".*" ".*" ".*"

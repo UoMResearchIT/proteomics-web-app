@@ -1,0 +1,41 @@
+FROM ubuntu:22.04
+
+# Install system dependencies
+# RUN  <<SysDep
+RUN apt-get update
+RUN apt-get install -y wget
+RUN apt-get install -y apt-utils
+# SysDep
+
+ENV DEBIAN_FRONTEND=noninteractive
+# # RUN  <<RSysDep
+RUN apt-get install -y -m curl libgbm-dev libcurl4-openssl-dev  libssl-dev libfontconfig1-dev libxml2-dev libharfbuzz-dev libfribidi-dev libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev
+RUN apt-get install -y libasound2.dev
+# # RSysDep
+
+WORKDIR /rclient
+
+# Install R
+ENV R_VERSION=4.3.3
+RUN apt-get -o Acquire::Retries=100 -y install gdebi-core
+RUN curl -O https://cdn.rstudio.com/r/ubuntu-2204/pkgs/r-${R_VERSION}_1_amd64.deb
+RUN gdebi -n r-${R_VERSION}_1_amd64.deb
+RUN rm r-${R_VERSION}_1_amd64.deb
+RUN ln -s /opt/R/${R_VERSION}/bin/R /usr/local/bin/R
+RUN ln -s /opt/R/${R_VERSION}/bin/Rscript /usr/local/bin/Rscript
+
+WORKDIR /app
+
+# Install required R packages
+RUN Rscript -e 'install.packages("renv",repos="https://cloud.r-project.org")'
+RUN apt-get install -y cmake libglpk40
+COPY renv.lock .
+RUN Rscript -e 'renv::restore()'
+
+# Copy app
+COPY R/ ./R/
+COPY www/ ./www/
+COPY app.R .
+
+# Run the shiny app
+CMD ["Rscript", "-e", "shiny::runApp(host='0.0.0.0',port=5678)"]

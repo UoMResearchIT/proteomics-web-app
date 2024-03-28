@@ -11,22 +11,43 @@ source("R/on_message.R")
 run_mqtt_client <- function() {
   passwd <- readLines("config/.secret_passwd")
   # Start MQTT client
-  mqtt_client <- process$new(
-    "mosquitto_sub",
-    args = c(
-      "-u", "proteinBASE",
-      "-P", passwd,
-      "-t", "#",
-      "-F", '{"date":"@Y-@m-@d","time":"@H:@M:@S","topic":"%t","payload":%p}'
-    ),
-    stdout = "|"
-  )
+  print("Starting MQTT client...")
+  retry <- TRUE
+  while (retry) {
+    mqtt_client <- process$new(
+      "mosquitto_sub",
+      args = c(
+        "-h", "rabbitmq",
+        "-u", "proteinBASE",
+        "-P", passwd,
+        "-t", "#",
+        "-F", '{"date":"@Y-@m-@d","time":"@H:@M:@S","topic":"%t","payload":%p}'
+      ),
+      stdout = "|"
+    )
+    Sys.sleep(1)
+    if (mqtt_client$is_alive()) {
+      print("MQTT client connected successfully, listening for messages...")
+      retry <- FALSE
+    } else {
+      print("MQTT client failed to connect, retrying...")
+    }
+  }
 
+  consecutive_not_alive <- 0
   # Listen for messages
   while (TRUE) {
-
-    # print("Waiting for messages...")
+    # if (!exists("i")) { i <- 0 }; i <- i + 1; print(paste(i, "Waiting for messages..."))
     tryCatch({
+      if (!mqtt_client$is_alive()) {
+        consecutive_not_alive <- consecutive_not_alive + 1
+      } else {
+        consecutive_not_alive <- 0
+      }
+      if (consecutive_not_alive >= 10) {
+        print("Lost MQTT client connection, exiting...")
+        break
+      }
       # Read line from MQTT client
       lines <- mqtt_client$read_output_lines()
 

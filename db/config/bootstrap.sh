@@ -21,12 +21,12 @@ set -e
 # Change the current directory to the directory of the script
 cd "$(dirname "$0")"
 # Fix secret credentials url. Should be "http://localhost:9000"
-sed -i 's#9001/api/v1/service-account-credentials#9000#g' minio/.secret_credentials.json
+sed -i 's#http.*api/v1/service-account-credentials#http://localhost:9000#g' minio/.secret_credentials.json
 
 # Generate random password
 cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 10 | head -n 1 > .secret_passwd
 # Launch docker compose newtork
-cd ../
+cd ../../
 docker compose up -d
 # Wait for RabbitMQ to be ready
 echo "Waiting for rabbitmq service..."
@@ -40,9 +40,8 @@ if [ $timeout -eq 0 ]; then
     echo "RabbitMQ service did not become ready within the expected time."
     exit 1
 fi
-echo "."
-sleep 2
-cd config
+
+cd db/config
 # Add mc alias
 mc alias import protein ./minio/.secret_credentials.json
 # Configure rabbitmq username and password

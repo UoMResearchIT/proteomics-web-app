@@ -178,7 +178,7 @@ bar_plot <- function(gene_dropdown, df){
     scale_y_continuous(name = "Normalized Log2-protein intensity") +
     theme_light() +
     theme(text = element_text(family = font_family, size = title_fontsize),
-          axis.text.x = element_text(size = label_fontsize),
+          axis.text.x = element_text(size = label_fontsize, angle = 45),
           axis.text.y = element_text(size = label_fontsize),
           legend.position = "none") +
     labs(NULL)

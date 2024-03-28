@@ -1,0 +1,95 @@
+services:
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: pB-cloudflared
+    restart: unless-stopped
+    environment:
+      - TUNNEL_TOKEN=not-the-real-token
+    command: tunnel --no-autoupdate run
+
+  proxy:
+    image: jc21/nginx-proxy-manager:latest
+    container_name: pB-proxy
+    restart: unless-stopped
+    ports:
+      - '80:80' # Public HTTP Port
+      - '443:443' # Public HTTPS Port
+      - '81:81' # Admin Web Port2
+    volumes:
+      - nginx-proxy:/data
+      # - ${PWD}/proxy_data:/data
+      - nginx-certs:/etc/letsencrypt
+    healthcheck:
+      test: [ "CMD", "/bin/check-health" ]
+      interval: 10s
+      timeout: 3s
+
+  minio:
+    image: quay.io/minio/minio:latest
+    container_name: pB-minio
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      - MINIO_ROOT_USER=ROOTUSER
+    env_file:
+      - ${PWD}/db/config/minio/.secret_minio_passwd
+    volumes:
+      - minio_s3data:/s3data
+      - ${PWD}/app/data:/data
+    command: server /s3data --console-address ":9001"
+
+  rabbitmq:
+    image: docker.io/bitnami/rabbitmq:3.12
+    container_name: pB-rabbitmq
+    restart: unless-stopped
+    ports:
+      - '1883:1883'
+      - '15672:15672'
+    environment:
+      - RABBITMQ_PLUGINS=rabbitmq_mqtt, rabbitmq_management
+      - RABBITMQ_LOGS=-
+      - RABBITMQ_CONF_FILE=/rabbitmq/rabbitmq.conf
+    volumes:
+      - rabbitmq_data:/bitnami/rabbitmq/mnesia
+      - ${PWD}/db/config/rabbitmq/rabbitmq.conf:/rabbitmq/rabbitmq.conf
+    healthcheck:
+      test: [ "CMD", "rabbitmq-diagnostics", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  rclient:
+    image: ghcr.io/uomresearchit/pb-rclient:latest
+    # build:
+    #   context: ./db
+    #   dockerfile: Dockerfile.rclient
+    container_name: pB-rclient
+    restart: unless-stopped
+    volumes:
+      - ${PWD}/app/data:/app/data
+      - ${PWD}/db/config/.secret_passwd:/rclient/config/.secret_passwd
+      - ${PWD}/db/config/minio/.secret_credentials.json:/rclient/config/minio/.secret_credentials.json
+    depends_on:
+      - minio
+      - rabbitmq
+
+  shinyapp:
+    image: ghcr.io/uomresearchit/pb-shinyapp:latest
+    # build:
+    #   context: ./app
+    #   dockerfile: Dockerfile.shinyapp
+    container_name: pB-shinyapp
+    restart: unless-stopped
+    ports:
+      - '5678:5678'
+    volumes:
+      - ${PWD}/app/data:/app/data
+
+volumes:
+  rabbitmq_data:
+    driver: local
+  minio_s3data:
+  nginx-proxy:
+  nginx-certs:

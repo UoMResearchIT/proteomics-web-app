@@ -72,8 +72,19 @@ app_server <- function(input, output, session) {
   dataset_info <- reactive({
     req(input$dataset)
     #find md info file in data/dataset-info
-    file_path <- paste0("data/dataset-info/", input$dataset, ".md", sep = "")
-    if (file.exists(file_path)) {
+    file_paths <- c(
+      paste0("data/dataset-info/", input$dataset, ".md", sep = ""),
+      paste0("data/dataset-info/", input$dataset, "_info.md", sep = ""),
+      paste0("data/dataset-info/", input$dataset, "-info.md", sep = "")
+    )
+    file_path <- NULL
+    for (path in file_paths) {
+      if (file.exists(path)) {
+        file_path <- path
+        break
+      }
+    }
+    if (!is.null(file_path)) {
       return(file_path)
     } else {
       return(paste("Info for dataset", input$dataset, "not available."))
@@ -269,12 +280,12 @@ app_server <- function(input, output, session) {
 
   #### Download buttons ####
   shinyjs::hide("subheat_save_as-save_as_button")
-  save_as_Server("pca_save_as", input$dataset, .pca_plot(), "PCA")
-  save_as_Server("heatmap_save_as", input$dataset, .heatmap_plot(),
+  save_as_server("pca_save_as", input$dataset, .pca_plot(), "PCA")
+  save_as_server("heatmap_save_as", input$dataset, .heatmap_plot(),
                  "HeatMap")
-  save_as_Server("subheat_save_as", input$dataset, .subheat_plot(),
+  save_as_server("subheat_save_as", input$dataset, .subheat_plot(),
                  "SubHeatMap")
-  save_as_Server("bar_save_as", input$dataset, .bar_plot(), "Bar")
-  save_as_Server("box_save_as", input$dataset, .box_plot(), "Box")
+  save_as_server("bar_save_as", input$dataset, .bar_plot(), "Bar")
+  save_as_server("box_save_as", input$dataset, .box_plot(), "Box")
 
 }
