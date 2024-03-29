@@ -1,7 +1,11 @@
 #### Load libraries ####
 library(tidyr)
-library(readxl)
+library(openxlsx)
 library(SummarizedExperiment)
+library(QFeatures)
+library(dplyr)
+library(MsCoreUtils)
+
 
 
 #### Full pre-processing pipeline ####
@@ -54,7 +58,7 @@ preprocess_data <- function(raw_data_path = "", dataset_name = "", dataset_path 
   # Load protein data
   print("Loading protein data...")
   protein_data <- tryCatch({
-    read_excel(dataset_path)
+    read.xlsx(dataset_path)
   }, error = function(e) {
     message("Error reading the Excel file:", conditionMessage(e))
   })

@@ -5,6 +5,7 @@
 # Load necessary libraries
 library(jsonlite)
 library(processx)
+library(crayon)
 
 source("R/on_message.R")
 
