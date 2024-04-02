@@ -1322,6 +1322,15 @@
       "Repository": "RSPM",
       "Hash": "a555924add98c99d2f411e37e7d25e9f"
     },
+    "preprocessCore": {
+      "Package": "preprocessCore",
+      "Version": "1.64.0",
+      "Source": "Bioconductor",
+      "Requirements": [
+        "stats"
+      ],
+      "Hash": "0a2241c04babfab4e0a1f43cfca33fbf"
+    },
     "processx": {
       "Package": "processx",
       "Version": "3.8.3",
