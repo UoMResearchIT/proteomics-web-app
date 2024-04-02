@@ -31,6 +31,7 @@ COPY renv.lock .
 COPY renv/activate.R ./renv/
 COPY renv/settings.json ./renv/
 RUN Rscript -e 'renv::restore()'
+RUN Rscript -e 'BiocManager::install("preprocessCore", configure.args = c(preprocessCore = "--disable-threading"), force= TRUE, update=TRUE, type = "source")'
 
 # Install minio client
 RUN  <<installMC

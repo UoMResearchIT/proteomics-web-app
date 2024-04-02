@@ -30,6 +30,8 @@ WORKDIR /app
 RUN Rscript -e 'install.packages("renv",repos="https://cloud.r-project.org")'
 RUN apt-get install -y cmake libglpk40
 COPY renv.lock .
+COPY renv/activate.R ./renv/
+COPY renv/settings.json ./renv/
 RUN Rscript -e 'renv::restore()'
 
 # Copy app
