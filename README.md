@@ -9,7 +9,40 @@ The proteinBASE site has two parts:
  Uploading a raw dataset triggers a workflow for pre-processing the data.
  Once the data is pre-processed, it is copied to the website's database, and becomes available to users.
 
-## Deploying the shiny app
+## Adding a new dataset
+New datasets, need to be uploaded to the raw-datasets directory in the minio server.
+
+For this, you need to have a user and a password.
+
+ - On the side menu, make sure you are on the **object browser** tab.
+ - Select he "**raw-data**" bucket.
+ - On the top right, click on the "**Upload**" button and select "**Upload File**".
+ - Select the file you want to upload, and confirm.
+
+Once the raw data file is uploaded, the server will start pre-processing the data, and upload the processed data to the *datasets*, *heatmaps*, and *pcaplots* buckets.
+
+When these files have been added, you can refresh the app's page, and you should see the dataset in the list of available datasets.
+
+## Adding dataset information
+
+The dataset information tab renders .md files in the "**dataset-info**" bucket.
+
+To upload or edit the information, make sure the name of the file matches the name of the dataset, and that it ends with "_info.md".
+
+For example, if the dataset is called "my_dataset", the file should be called "my_dataset_info.md".
+
+## Deleting a dataset
+
+If you want to completely remove a dataset and all of its related files (in the datasets, heatmaps, pcaplots, and dataset-info buckets), you can do so by deleting the file in the raw-data bucket.
+
+If you remove the file from the datasets bucket, the related files will not be deleted, but wont be available in the app.
+
+## Editing the app content pages
+
+The app content pages are written in markdown, and are stored in the *content* bucket.
+Use the same procedure as for the dataset information files to edit the content pages.
+
+# Deploying the shiny app
 The service is orquestrated using docker-compose, so the server must have a working installation of docker.
 
 ### Clone this repository
