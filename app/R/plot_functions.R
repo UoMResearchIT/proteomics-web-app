@@ -77,10 +77,10 @@ generate_heatmap_colors <- function(data) {
                                   colors = c("blue", "white", "red"),
                                   space = "sRGB")
   # Create color lists for samples and groups labels
-  samples_names <- gsub("_", " ", colnames(x)) # for sample annotation
+  samples_names <- sub("_", " ", colnames(x)) # for sample annotation
   samples_colors <- rainbow(length(samples_names))
   col_samples <- setNames(samples_colors, samples_names)
-  group_names <- gsub("_\\d+", "", colnames(x)) |> as.factor() |> levels()
+  group_names <- sub("_\\d+", "", colnames(x)) |> as.factor() |> levels()
   group_colors <- hcl.colors(length(group_names))
   col_group <- setNames(group_colors, group_names)
 
@@ -90,8 +90,8 @@ generate_heatmap_colors <- function(data) {
 }
 
 top_annotation <- function(data, heatmap_colors, legend = TRUE) {
-  samples_lab <- gsub("_", " ", colnames(data))
-  groups_lab <- gsub("_\\d+", "", colnames(data))
+  samples_lab <- sub("_", " ", colnames(data))
+  groups_lab <- sub("_\\d+", "", colnames(data))
   top_annotation <- HeatmapAnnotation(
     Samples = samples_lab,
     Groups = groups_lab,

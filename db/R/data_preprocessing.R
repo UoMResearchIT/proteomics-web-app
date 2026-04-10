@@ -19,7 +19,7 @@ preprocess_data <- function(raw_data_path = "", dataset_name = "", dataset_path 
   # Set paths
   data_path <- "../app/data/"
   if (dataset_name == "") {
-    dataset_name <- gsub(".txt", "", basename(raw_data_path))
+    dataset_name <- gsub(".tsv", "", basename(raw_data_path))
   }
   if (dataset_path == "") {
     prepare_dataset <- TRUE
@@ -78,23 +78,27 @@ preprocess_data <- function(raw_data_path = "", dataset_name = "", dataset_path 
 }
 
 
-#### Generates dataset from raw txt ####
+#### Generates dataset from protein .tsv ####
 prepare_dataset <- function(raw_data_path, dataset_path) {
-  # This function reads the raw txt file and prepares it as protein data.
-  # The `raw_data_path` is the path to the raw txt file with the data.
+  # This function reads the protein data .tsv file.
+  # The `raw_data_path` is the path to the .tsv file with the data.
   # The `dataset_path` is the path to save the prepared dataset.
-
-  peptides <- read.delim(raw_data_path)
+  
+  proteins <- read.delim(raw_data_path) |> dplyr::filter(Organism != "")
   # Identify columns with quantitative expression values
-  ecols <- grep("Intensity.", names(peptides))
+  ecols <- grep("_\\d+\\.Intensity", names(proteins))
   # Identify pooled samples from the data if present and remove it
-  if (any(grepl("pool", names(peptides[ecols]), ignore.case = TRUE))) {
-    ecols <- ecols[!grepl("pool", names(peptides[ecols]), ignore.case = TRUE)]
+  if (any(grepl("pool", names(proteins[ecols]), ignore.case = TRUE))) {
+    ecols <- ecols[!grepl("pool", names(proteins[ecols]), ignore.case = TRUE)]
   }
+  # Remove entries flagged as common contaminants
+  contaminant_rows <- grep("contam_sp", proteins$Protein)
+  proteins <- proteins[-contaminant_rows, ]
   # Create an S4 object, QFeatures type
   s4 <- QFeatures::readQFeatures(
-    table = raw_data_path, # peptide data
-    ecol = ecols, # expression indexes
+    table = proteins, # protein data
+    assayData = proteins, 
+    quantCols = ecols, # expression indexes
     fnames = 1, # feature names
     name = "raw", # raw assay name
     sep = "\t" # separator for tabular data
@@ -103,47 +107,28 @@ prepare_dataset <- function(raw_data_path, dataset_path) {
   rowData(s4[[1]])$nNonZero <- rowSums(assay(s4[[1]]) > 0)
   # Replace zeroes with NA in S4 object
   s4 <- QFeatures::zeroIsNA(object = s4, i = "raw")
-  # Remove contaminant peptides
-  s4 <- QFeatures::filterFeatures(
-    object = s4,
-    filter = ~Potential.contaminant != "+"
-  )
-  # Remove decoys
-  s4 <- QFeatures::filterFeatures(object = s4, filter = ~Reverse != "+")
   # Remove proteins present in < 2 replicates
   s4 <- QFeatures::filterFeatures(object = s4, filter = ~nNonZero > 1)
-  # Remove overlapping proteins
-  filter <- rowData(s4[[1]])$Proteins %in%
-    msqrob2::smallestUniqueGroups(rowData(s4[[1]])$Proteins)
-  s4 <- s4[filter, , ]
-  # Normalize by quantiles
-  s4 <- normalize(
-    object = s4, # S4 peptide data
-    i = "raw", # log expression data
-    name = "norm", # norm assay name
-    method = "quantiles" # normalization method
-  )
   # Log2-transform peptide data #### ****** modified here
   s4 <- QFeatures::logTransform(
     object = s4, # S4 peptide data
-    i = "norm", # raw expression matrix
+    i = "raw", # raw expression matrix
     name = "log", # log assay name
     base = 2
   )
-  # Summarize peptide to protein
-  s4 <- QFeatures::aggregateFeatures(
+  # Normalize by median centring
+  s4 <- normalize(
     object = s4, # S4 peptide data
-    i = "log", # normalized expression data
-    name = "prot", # protein assay name
-    fcol = "Proteins", # rowData variable for aggregation
-    fun = MsCoreUtils::robustSummary, # quantitative aggregation function
+    i = "log", # log expression data
+    name = "norm", # norm assay name
+    method = "center.median" # normalization method
   )
   # Extract summarized protein data
-  protein_data <- dplyr::as_tibble(assay(s4[[4]]))
-  protein_data$Protein <- rowData(s4[[4]])$Leading.razor.protein
-  protein_data$Gene <- rowData(s4[[4]])$Gene.names
-  protein_data$Identifiers <- rowData(s4[[4]])$Proteins
-  colnames(protein_data) <- gsub("Intensity.", "", colnames(protein_data))
+  protein_data <- dplyr::as_tibble(assay(s4[["norm"]]))
+  protein_data$Protein <- rowData(s4[["norm"]])$Protein.ID
+  protein_data$Gene <- rowData(s4[["norm"]])$Gene
+  protein_data$Identifiers <- rowData(s4[["norm"]])$Entry.Name
+  colnames(protein_data) <- sub(".Intensity", "", colnames(protein_data))
   protein_data <- protein_data |>
     dplyr::relocate(Identifiers, Protein, Gene) |>
     dplyr::arrange(Protein)
@@ -170,8 +155,8 @@ pca_data <- function(protein_data, pca_data_path) {
   # Format data set as a transposed matrix
   protein_pca_matrix <- t(protein_pca[, 1:(ncol(protein_pca) - 1)])
   # Save to file
-  protein_pca_df <- as.data.frame(protein_pca_matrix)
-  openxlsx::write.xlsx(x = protein_pca_df,
+  protein_pca_matrix <- as.data.frame(protein_pca_matrix)
+  openxlsx::write.xlsx(x = protein_pca_matrix,
                        file = pca_data_path,
                        rowNames = TRUE, overwrite = TRUE)
 }
