@@ -1,7 +1,13 @@
-# Plot for data set exploration
+# **Visualization tools available in proteinBASE**
 
-**Principal Component Analysis (PCA)**: PCA plots are instrumental in pinpointing sources of variability among replicates within the data set. They can be used to explore each individual data set and visualise patterns related to conditions relevant to the biological context of the study. These conditions may include experimental groups, treatment effects, or diseases.
+### **Principal Component Analysis (PCA)**
 
-**Hierarchical Clustering Heatmap**: This plot provides a representation of the relationships between proteins in different samples, facilitating the identification of patterns and trends within the data. The plots can identify patterns of correlations among replicates within a data set.
+PCA plots help identify major sources of variability across samples and replicates. They allow users to explore each dataset individually and visualise patterns linked to key biological or experimental factors, such as treatment groups, conditions, or disease states. 
 
-**Single Protein Search**: Use bar plots and box plots to visually explore a protein of interest identified in a data set. These plots showcase the normalised, log-transformed abundance of the protein, highlighting variations related to factors such as treatment, disease, or experimental groups.
+### **Hierarchical Clustering Heatmap**
+
+Heatmaps provide an overview of protein expression relationships across samples, enabling the detection of trends, co-expression patterns, and sample clustering. These visualisations help assess replicate consistency and highlight biologically meaningful structures within the dataset.
+
+### **Single Protein Search**
+
+Explore individual proteins using interactive bar and box plots. These plots display quantile-normalised, log2-transformed abundance values, making it easy to compare protein levels across treatments, disease conditions, or experimental groups and to highlight biologically relevant differences.

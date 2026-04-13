@@ -88,15 +88,16 @@ app_ui <- function(request) {
               selectInput(
                 inputId = "dataset",
                 label = "Choose a dataset:",
-                choices = gsub(
-                  pattern = "\\.xlsx$",
-                  "",
-                  list.files(
+                choices = {
+                  files <- list.files(
                     path = "data/datasets/",
                     pattern = "\\.xlsx$",
                     full.names = FALSE
-                  ),
-                )
+                  )
+                  input_values <- gsub(pattern = "\\.xlsx$", replacement = "", x = files)
+                  display_names <- gsub(pattern = "_", replacement = " ", x = input_values)
+                  setNames(object = input_values, nm = display_names)
+                },
               ),
             ),
             div(

@@ -1,3 +1,5 @@
-# About
+# **proteinBASE** - An online visualization platform for proteomics datasets
 
-**proteinBASE** is a web-based application hosted by the Manchester Cell-Matrix Centre. It provides access to data generated within the Centre and through external collaborations. With a suite of interactive visualisation tools, it enhances the exploration and understanding of label-free proteomic data sets to facilitate data exploration and identify meaningful patterns in data, to enable deeper insight. For all outputs from the application, please acknowledge proteinBASE and the Manchester Cell-Matrix Centre.
+### Welcome to **proteinBASE**
+
+This tool allow users to interactively explore mass-spectrometry proteomic datasets. Using a rich suite of dynamic visualisation tools, proteinBASE transforms complex datasets into accessible insights to empower users to investigate protein expression patterns and biological signatures across label-free quantitative proteomics studies. For all outputs from the application, please acknowledge **proteinBASE** and the **Manchester Cell-Matrix Centre**.
