@@ -46,7 +46,7 @@ app_ui <- function(request) {
         div(
           id = "header-title",
           class = "header-item",
-          p(id = "department", "The Lennon Lab"),
+          p(id = "department", ""),
           p(id = "header-appname", "proteinBASE")
         ),
         div(
