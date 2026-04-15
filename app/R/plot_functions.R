@@ -124,7 +124,7 @@ make_heatmap <- function(data, heatmap_colors) {
   set.seed(3)
   ht <- ComplexHeatmap::Heatmap(
     data_m,
-    name = "P. Level",
+    name = "Intensity",
     cluster_rows = TRUE,
     cluster_columns = TRUE,
     col = heatmap_colors$col_fun,
@@ -157,7 +157,7 @@ make_sub_heatmap <- function(data, heatmap_colors) {
   set.seed(3)
   ht <- ComplexHeatmap::Heatmap(
     data_m,
-    name = "P. Level",
+    name = "Intensity",
     cluster_rows = FALSE,
     cluster_columns = FALSE,
     col = heatmap_colors$col_fun,
