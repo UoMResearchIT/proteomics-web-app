@@ -103,8 +103,7 @@ prepare_dataset <- function(raw_data_path, dataset_path) {
   print("  DEBUG - Creating QFeatures object...")
   s4 <- QFeatures::readQFeatures(
     table = proteins, # protein data
-    assayData = proteins, 
-    quantCols = ecols, # expression indexes
+    ecol = ecols, # expression indexes
     fnames = 1, # feature names
     name = "raw", # raw assay name
     sep = "\t" # separator for tabular data
