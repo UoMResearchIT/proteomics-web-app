@@ -28,10 +28,20 @@ label_font_gp <- function() {
 
 #### TAB 1 ####
 pca_plot <- function(matrix) {
+  max_ncomp <- min(nrow(matrix) - 1, ncol(matrix))
+  if (is.na(max_ncomp) || max_ncomp < 2) {
+    return(
+      ggplot() +
+        annotate("text", x = 0, y = 0,
+                 label = "Not enough data to compute 2 principal components") +
+        theme_void()
+    )
+  }
+
   # Run PCA
   pca_protein <- mixOmics::pca(
     X = matrix,
-    ncomp = nrow(matrix),
+    ncomp = max_ncomp,
     center = TRUE
   )
   # Extract from 'pca_protein' coordinates for the PCA plot
