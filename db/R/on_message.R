@@ -155,7 +155,7 @@ on_raw_data_added <- function(file) {
 }
 on_raw_data_deleted <- function(file) {
   file_name <- gsub("raw-data/", "", file)
-  dataset_name <- gsub(".txt", "", file_name)
+  dataset_name <- gsub(".tsv", "", file_name)
   print(paste("Detected delition of raw data file: ", file_name))
   # Delete related pre-processed data files
   print("Deleting related files...")

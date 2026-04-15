@@ -69,14 +69,14 @@ run_mqtt_client <- function() {
 # # Example message for new file in datasets
 # minio/datasets {
 #   "EventName": "s3:ObjectCreated:Put",
-#   "Key": "datasets/1.txt",
+#   "Key": "datasets/1.tsv",
 #   "Records": [{...}]
 # }
 
 # # Example message for deleted file file from datasets
 # minio/datasets {
 #   "EventName": "s3:ObjectRemoved:Delete",
-#   "Key": "datasets/1.txt",
+#   "Key": "datasets/1.tsv",
 #   "Records": [{...}]
 # }
 
