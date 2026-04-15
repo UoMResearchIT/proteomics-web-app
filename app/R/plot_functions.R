@@ -8,19 +8,20 @@ library(grid)
 library(dplyr)
 
 #### Settings ####
-font_family <- "sans"
+font_family_web <- "Open Sans Local, Open Sans, Arial, sans-serif"
+font_family_grid <- "sans" # grid-based plots need to use fonts from the system
 title_fontsize <- 14
 label_fontsize <- 13
 # Fonts in complex heatmaps are smaller, so added an extra pt.
 title_font_gp <- function() {
   title_fonts <- gpar(fontsize = title_fontsize + 1,
                       fontface = "bold",
-                      fontfamily = font_family)
+                      fontfamily = font_family_grid)
   return(title_fonts)
 }
 label_font_gp <- function() {
   label_fonts <- gpar(fontsize = label_fontsize + 1,
-                      fontfamily = font_family)
+                      fontfamily = font_family_grid)
   return(label_fonts)
 }
 
@@ -67,7 +68,7 @@ pca_plot <- function(matrix) {
     xlim((min(coord$PC1) - 10), max(coord$PC1) + 10) +
     ylim((min(coord$PC2) - 10), max(coord$PC2) + 10) +
     theme_light() +
-    theme(text = element_text(family = font_family, size = title_fontsize),
+        theme(text = element_text(family = font_family_web, size = title_fontsize),
           axis.text.x = element_text(size = label_fontsize),
           axis.text.y = element_text(size = label_fontsize)) +
     guides(shape = "none")
@@ -163,7 +164,7 @@ make_sub_heatmap <- function(data, heatmap_colors) {
     col = heatmap_colors$col_fun,
     show_row_names = TRUE,
     row_labels = row_lab,
-    row_names_gp = gpar(fontsize = row_font_size, fontfamily = font_family),
+    row_names_gp = gpar(fontsize = row_font_size, fontfamily = font_family_grid),
     show_column_names = FALSE,
     row_title = "Proteins",
     row_title_gp = title_font_gp(),
@@ -194,7 +195,7 @@ bar_plot <- function(gene_dropdown, df) {
     xlab("") +
     scale_y_continuous(name = "Normalized Log2-protein intensity") +
     theme_light() +
-    theme(text = element_text(family = font_family, size = title_fontsize),
+    theme(text = element_text(family = font_family_web, size = title_fontsize),
           axis.text.x = element_text(size = label_fontsize, angle = 45),
           axis.text.y = element_text(size = label_fontsize),
           legend.position = "none") +
@@ -221,7 +222,7 @@ box_plot <- function(gene_dropdown, df) {
     xlab("") +
     scale_y_continuous(name = "Normalized Log2-protein intensity") +
     theme_light() +
-    theme(text = element_text(family = font_family, size = title_fontsize),
+    theme(text = element_text(family = font_family_web, size = title_fontsize),
           axis.text.x = element_text(size = label_fontsize),
           axis.text.y = element_text(size = label_fontsize),
           legend.position = "none")

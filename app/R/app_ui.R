@@ -16,8 +16,7 @@ custom_theme <- bslib::bs_theme(
   bg = "#FFFFFF",
   fg = "#000000",
   primary = "#660099",
-  secondary = "#999999",
-  base_font = bslib::font_google("Open Sans")
+  secondary = "#999999"
 )
 
 
