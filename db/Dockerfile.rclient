@@ -9,8 +9,8 @@ RUN apt-get install -y apt-utils
 
 ENV DEBIAN_FRONTEND=noninteractive
 # # RUN  <<RSysDep
-RUN apt-get install -y -m curl libgbm-dev libcurl4-openssl-dev  libssl-dev libfontconfig1-dev libxml2-dev libharfbuzz-dev libfribidi-dev libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev
-RUN apt-get install -y libasound2.dev
+RUN apt-get install -y -m curl libgbm-dev libcurl4-openssl-dev libssl-dev libfontconfig1-dev libxml2-dev libharfbuzz-dev libfribidi-dev libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev
+RUN apt-get install -y build-essential gfortran pkg-config libasound2-dev
 # # RSysDep
 
 WORKDIR /rclient
@@ -25,7 +25,9 @@ RUN ln -s /opt/R/${R_VERSION}/bin/R /usr/local/bin/R
 RUN ln -s /opt/R/${R_VERSION}/bin/Rscript /usr/local/bin/Rscript
 
 # Install required R packages
-RUN Rscript -e 'install.packages("renv",repos="https://cloud.r-project.org")'
+ENV RENV_CONFIG_PAK_ENABLED=FALSE
+# Install the exact renv version pinned in the lockfile to avoid self-downgrade during restore
+RUN Rscript -e 'install.packages("https://cran.r-project.org/src/contrib/Archive/renv/renv_1.0.5.tar.gz", repos = NULL, type = "source")'
 RUN apt-get install -y cmake
 COPY renv.lock .
 COPY renv/activate.R ./renv/
