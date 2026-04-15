@@ -9,8 +9,8 @@ library(dplyr)
 
 #### Settings ####
 font_family <- "sans"
-title_fontsize <- 13
-label_fontsize <- 11
+title_fontsize <- 14
+label_fontsize <- 13
 # Fonts in complex heatmaps are smaller, so added an extra pt.
 title_font_gp <- function() {
   title_fonts <- gpar(fontsize = title_fontsize + 1,
