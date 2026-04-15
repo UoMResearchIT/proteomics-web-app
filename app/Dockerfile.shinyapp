@@ -10,7 +10,7 @@ RUN apt-get install -y apt-utils
 ENV DEBIAN_FRONTEND=noninteractive
 # # RUN  <<RSysDep
 RUN apt-get install -y -m curl libgbm-dev libcurl4-openssl-dev  libssl-dev libfontconfig1-dev libxml2-dev libharfbuzz-dev libfribidi-dev libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev
-RUN apt-get install -y libasound2.dev
+RUN apt-get install -y libasound2-dev
 # # RSysDep
 
 WORKDIR /rclient
@@ -27,7 +27,8 @@ RUN ln -s /opt/R/${R_VERSION}/bin/Rscript /usr/local/bin/Rscript
 WORKDIR /app
 
 # Install required R packages
-RUN Rscript -e 'install.packages("renv",repos="https://cloud.r-project.org")'
+ENV RENV_CONFIG_PAK_ENABLED=FALSE
+RUN Rscript -e 'install.packages("https://cran.r-project.org/src/contrib/Archive/renv/renv_1.0.3.tar.gz", repos = NULL, type = "source")'
 RUN apt-get install -y cmake libglpk40
 COPY renv.lock .
 COPY renv/activate.R ./renv/
