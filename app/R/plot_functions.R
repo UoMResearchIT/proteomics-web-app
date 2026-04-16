@@ -8,30 +8,72 @@ library(grid)
 library(dplyr)
 
 #### Settings ####
-font_family <- "sans"
-title_fontsize <- 13
-label_fontsize <- 11
-# Fonts in complex heatmaps are smaller, so added an extra pt.
+font_family_web <- "Open Sans Local, Open Sans, Arial, sans-serif"
+font_family_grid <- "sans" # grid-based plots need to use fonts from the system
+# Paul Tol colorblind-safe palette
+cb_palette <- c(
+  "#332288",
+  "#117733",
+  "#AA4499",
+  "#DDCC77",
+  "#88CCEE",
+  "#882255",
+  "#44AA99",
+  "#CC6677",
+  "#999933",
+  "#DDDDDD"
+)
+cb_colors <- function(n) rep_len(cb_palette, n)
+title_fontsize <- 14
+label_fontsize <- 13
+# Separate control for complex heatmaps fonts, as they use grid graphics
 title_font_gp <- function() {
-  title_fonts <- gpar(fontsize = title_fontsize + 1,
+  title_fonts <- gpar(fontsize = title_fontsize - 1,
                       fontface = "bold",
-                      fontfamily = font_family)
+                      fontfamily = font_family_grid)
   return(title_fonts)
 }
-label_font_gp <- function() {
-  label_fonts <- gpar(fontsize = label_fontsize + 1,
-                      fontfamily = font_family)
-  return(label_fonts)
+label_font_gp <- function(legend_labels = NULL) {
+  if (is.null(legend_labels)) {
+    label_fonts <- gpar(fontsize = label_fontsize - 1,
+                        fontfamily = font_family_grid)
+    return(label_fonts)
+  }
+  # Characterize size of legend to adjust font size accordingly
+  longest_legend <- if (length(legend_labels) == 0) { 0 } else {
+    max(nchar(legend_labels), na.rm = TRUE) }
+  n_items <- length(legend_labels)
+  legend_size_factor <- max(longest_legend*2, n_items*2)
+  # Calculate font size and return legend parameters
+  legend_fontsize <- calculate_row_fontsize(legend_size_factor)
+  legend_ncol <- if (legend_fontsize <= 3) 2 else 1
+  legend_key_size <- max(legend_fontsize * 0.42, 1)
+  return(list(
+    ncol = legend_ncol,
+    labels_gp = gpar(fontsize = legend_fontsize, fontfamily = font_family_grid),
+    grid_width = unit(legend_key_size, "mm"),
+    grid_height = unit(legend_key_size, "mm")
+  ))
 }
 
 ##### Plotting scripts ####
 
 #### TAB 1 ####
 pca_plot <- function(matrix) {
+  max_ncomp <- min(nrow(matrix) - 1, ncol(matrix))
+  if (is.na(max_ncomp) || max_ncomp < 2) {
+    return(
+      ggplot() +
+        annotate("text", x = 0, y = 0,
+                 label = "Not enough data to compute 2 principal components") +
+        theme_void()
+    )
+  }
+
   # Run PCA
   pca_protein <- mixOmics::pca(
     X = matrix,
-    ncomp = nrow(matrix),
+    ncomp = max_ncomp,
     center = TRUE
   )
   # Extract from 'pca_protein' coordinates for the PCA plot
@@ -57,9 +99,10 @@ pca_plot <- function(matrix) {
     xlim((min(coord$PC1) - 10), max(coord$PC1) + 10) +
     ylim((min(coord$PC2) - 10), max(coord$PC2) + 10) +
     theme_light() +
-    theme(text = element_text(family = font_family, size = title_fontsize),
+        theme(text = element_text(family = font_family_web, size = title_fontsize),
           axis.text.x = element_text(size = label_fontsize),
           axis.text.y = element_text(size = label_fontsize)) +
+    scale_color_manual(values = cb_colors(nlevels(coord$group))) +
     guides(shape = "none")
   return(pca_plot)
 }
@@ -77,10 +120,10 @@ generate_heatmap_colors <- function(data) {
                                   colors = c("blue", "white", "red"),
                                   space = "sRGB")
   # Create color lists for samples and groups labels
-  samples_names <- gsub("_", " ", colnames(x)) # for sample annotation
+  samples_names <- sub("_", " ", colnames(x)) # for sample annotation
   samples_colors <- rainbow(length(samples_names))
   col_samples <- setNames(samples_colors, samples_names)
-  group_names <- gsub("_\\d+", "", colnames(x)) |> as.factor() |> levels()
+  group_names <- sub("_\\d+", "", colnames(x)) |> as.factor() |> levels()
   group_colors <- hcl.colors(length(group_names))
   col_group <- setNames(group_colors, group_names)
 
@@ -90,8 +133,8 @@ generate_heatmap_colors <- function(data) {
 }
 
 top_annotation <- function(data, heatmap_colors, legend = TRUE) {
-  samples_lab <- gsub("_", " ", colnames(data))
-  groups_lab <- gsub("_\\d+", "", colnames(data))
+  samples_lab <- sub("_", " ", colnames(data))
+  groups_lab <- sub("_\\d+", "", colnames(data))
   top_annotation <- HeatmapAnnotation(
     Samples = samples_lab,
     Groups = groups_lab,
@@ -100,9 +143,9 @@ top_annotation <- function(data, heatmap_colors, legend = TRUE) {
     show_annotation_name = TRUE,
     annotation_name_side = "left",
     annotation_name_gp = label_font_gp(),
-    annotation_legend_param = list(
-      title_gp = title_font_gp(),
-      labels_gp = label_font_gp()
+    annotation_legend_param = c(
+      list(title_gp = title_font_gp()),
+      label_font_gp(unique(c(samples_lab, groups_lab)))
     ),
     show_legend = legend
   )
@@ -114,7 +157,7 @@ make_heatmap <- function(data, heatmap_colors) {
   set.seed(3)
   ht <- ComplexHeatmap::Heatmap(
     data_m,
-    name = "P. Level",
+    name = "Intensity",
     cluster_rows = TRUE,
     cluster_columns = TRUE,
     col = heatmap_colors$col_fun,
@@ -130,7 +173,12 @@ make_heatmap <- function(data, heatmap_colors) {
       labels_gp = label_font_gp()
     )
   )
-  dht <- draw(ht, merge_legend = TRUE, newpage = FALSE)
+  dht <- draw(
+    ht,
+    merge_legend = TRUE,
+    newpage = FALSE,
+    padding = unit(c(2, 2, 2, 6), "mm")
+  )
   return(dht)
 }
 
@@ -147,13 +195,13 @@ make_sub_heatmap <- function(data, heatmap_colors) {
   set.seed(3)
   ht <- ComplexHeatmap::Heatmap(
     data_m,
-    name = "P. Level",
+    name = "Intensity",
     cluster_rows = FALSE,
     cluster_columns = FALSE,
     col = heatmap_colors$col_fun,
     show_row_names = TRUE,
     row_labels = row_lab,
-    row_names_gp = gpar(fontsize = row_font_size, fontfamily = font_family),
+    row_names_gp = gpar(fontsize = row_font_size, fontfamily = font_family_grid),
     show_column_names = FALSE,
     row_title = "Proteins",
     row_title_gp = title_font_gp(),
@@ -184,10 +232,11 @@ bar_plot <- function(gene_dropdown, df) {
     xlab("") +
     scale_y_continuous(name = "Normalized Log2-protein intensity") +
     theme_light() +
-    theme(text = element_text(family = font_family, size = title_fontsize),
+    theme(text = element_text(family = font_family_web, size = title_fontsize),
           axis.text.x = element_text(size = label_fontsize, angle = 45),
           axis.text.y = element_text(size = label_fontsize),
           legend.position = "none") +
+    scale_fill_manual(values = cb_colors(length(unique(df_plot$experiment_type)))) +
     labs(NULL)
   return(p)
 }
@@ -211,9 +260,10 @@ box_plot <- function(gene_dropdown, df) {
     xlab("") +
     scale_y_continuous(name = "Normalized Log2-protein intensity") +
     theme_light() +
-    theme(text = element_text(family = font_family, size = title_fontsize),
+    theme(text = element_text(family = font_family_web, size = title_fontsize),
           axis.text.x = element_text(size = label_fontsize),
           axis.text.y = element_text(size = label_fontsize),
-          legend.position = "none")
+          legend.position = "none") +
+    scale_fill_manual(values = cb_colors(length(unique(df_plot$experiment_type))))
   return(p)
 }

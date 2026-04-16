@@ -1,0 +1,110 @@
+name: build-push-all
+
+on:
+  workflow_dispatch:
+    inputs:
+      push_vb:
+        description: "Push versioned '-branch_name' tag? ('-main' and '-dev' omitted)"
+        required: false
+        type: boolean
+        default: true
+      custom_tag:
+        description: "Push custom tag? (leave blank to skip)"
+        required: false
+        type: string
+        default: ""
+  push:
+    branches: ["main", "dev"]
+    paths:
+      - "Dockerfile.pb-base"
+      - 'db/**'
+      - 'app/**'
+  pull_request:
+    branches: ["main", "dev"]
+    paths:
+      - "Dockerfile.pb-base"
+      - 'db/**'
+      - 'app/**'
+
+# --------------------------------------------------------------------------------- #
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      pb-base: ${{ steps.filter.outputs.pb-base }}
+      rclient: ${{ steps.filter.outputs.rclient }}
+      shinyapp: ${{ steps.filter.outputs.shinyapp }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: dorny/paths-filter@v1
+        id: filter
+        with:
+          filters: |
+            pb-base:
+              - 'Dockerfile.pb-base'
+            rclient:
+              - 'db/**'
+              - 'Dockerfile.pb-base'
+            shinyapp:
+              - 'app/**'
+              - 'Dockerfile.pb-base'
+
+  pb-base:
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.pb-base == 'true' || github.event_name == 'workflow_dispatch' }}
+    uses: ./.github/workflows/build-test-push.yml
+    with:
+      container_name: pb-base
+      org_name: ghcr.io/uomresearchit
+      build_context: "."
+      dockerfile: "./Dockerfile.pb-base"
+      test_script: |
+        exit 0
+      push_vb: ${{ github.event.inputs.push_vb == 'true' }}
+      custom_tag: ${{ github.event.inputs.custom_tag }}
+    secrets:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    permissions:
+      contents: read
+      packages: write
+  
+  rclient:
+    needs: [detect-changes, pb-base]
+    if: ${{ needs.detect-changes.outputs.rclient == 'true' || github.event_name == 'workflow_dispatch' }}
+    uses: ./.github/workflows/build-test-push.yml
+    with:
+      container_name: pb-rclient
+      org_name: ghcr.io/uomresearchit
+      build_context: "./db"
+      dockerfile: "./db/Dockerfile.rclient"
+      test_script: |
+        exit 0
+      push_vb: ${{ github.event.inputs.push_vb == 'true' }}
+      custom_tag: ${{ github.event.inputs.custom_tag }}
+    secrets:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    permissions:
+      contents: read
+      packages: write
+  
+  shinyapp:
+    needs: [detect-changes, pb-base]
+    if: ${{ needs.detect-changes.outputs.shinyapp == 'true' || github.event_name == 'workflow_dispatch' }}
+    uses: ./.github/workflows/build-test-push.yml
+    with:
+      container_name: pb-shinyapp
+      org_name: ghcr.io/uomresearchit
+      build_context: "./app"
+      dockerfile: "./app/Dockerfile.shinyapp"
+      test_script: |
+        exit 0
+      push_vb: ${{ github.event.inputs.push_vb == 'true' }}
+      custom_tag: ${{ github.event.inputs.custom_tag }}
+    secrets:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    permissions:
+      contents: read
+      packages: write

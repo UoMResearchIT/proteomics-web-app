@@ -1,14 +1,6 @@
 services:
-  cloudflared:
-    image: cloudflare/cloudflared:latest
-    container_name: pB-cloudflared
-    restart: unless-stopped
-    env_file:
-      - ${PWD}/db/config/cloudflared/.secret_tunnel_token
-    command: tunnel --no-autoupdate run
-
   proxy:
-    image: jc21/nginx-proxy-manager:latest
+    image: jc21/nginx-proxy-manager:2.11.3
     container_name: pB-proxy
     restart: unless-stopped
     ports:
@@ -16,8 +8,7 @@ services:
       - '443:443' # Public HTTPS Port
       - '81:81' # Admin Web Port2
     volumes:
-      - nginx-proxy:/data
-      # - ${PWD}/proxy_data:/data
+      - ${PWD}/proxy_data:/data
       - nginx-certs:/etc/letsencrypt
     healthcheck:
       test: [ "CMD", "/bin/check-health" ]
@@ -45,7 +36,6 @@ services:
     container_name: pB-rabbitmq
     restart: unless-stopped
     ports:
-      - '1883:1883'
       - '15672:15672'
     environment:
       - RABBITMQ_PLUGINS=rabbitmq_mqtt, rabbitmq_management

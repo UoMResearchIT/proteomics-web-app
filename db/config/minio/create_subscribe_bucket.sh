@@ -75,13 +75,13 @@ fi
 # Test messages are sent on copy and delete
 if [ "$test" -ne 0 ]; then
     # Echo random string to temp file
-    tr -cd '[:alnum:]' < /dev/urandom | fold -w "64" | head -n 1 > /tmp/1.txt
+    tr -cd '[:alnum:]' < /dev/urandom | fold -w "64" | head -n 1 > /tmp/1.tsv
     # Copy file to bucket
-    mc cp /tmp/1.txt protein/"$bucket_name"
+    mc cp /tmp/1.tsv protein/"$bucket_name"
     if [ "$verbose" = "true" ]; then
         # List files in bucket
         mc ls protein/"$bucket_name"
     fi
     # Remove file from bucket
-    mc rm protein/"$bucket_name"/1.txt --versions --force
+    mc rm protein/"$bucket_name"/1.tsv --versions --force
 fi

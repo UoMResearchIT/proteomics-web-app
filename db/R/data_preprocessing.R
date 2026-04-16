@@ -12,14 +12,14 @@ library(preprocessCore)
 #### Full pre-processing pipeline ####
 preprocess_data <- function(raw_data_path = "", dataset_name = "", dataset_path = "") {
   # This function triggers the full data pre-processing pipeline.
-  # To go from the raw txt file with the data, provide the `raw_data_path`.
+  # To go from the raw tsv file with the data, provide the `raw_data_path`.
   # The `dataset_name` is optional, and it is used to name the output files.
   # To skip the data preparation, use `dataset_path` instead of `raw_data_path`.
 
   # Set paths
   data_path <- "../app/data/"
   if (dataset_name == "") {
-    dataset_name <- gsub(".txt", "", basename(raw_data_path))
+    dataset_name <- gsub(".tsv", "", basename(raw_data_path))
   }
   if (dataset_path == "") {
     prepare_dataset <- TRUE
@@ -78,76 +78,73 @@ preprocess_data <- function(raw_data_path = "", dataset_name = "", dataset_path 
 }
 
 
-#### Generates dataset from raw txt ####
+#### Generates dataset from protein .tsv ####
 prepare_dataset <- function(raw_data_path, dataset_path) {
-  # This function reads the raw txt file and prepares it as protein data.
-  # The `raw_data_path` is the path to the raw txt file with the data.
+  # This function reads the protein data .tsv file.
+  # The `raw_data_path` is the path to the .tsv file with the data.
   # The `dataset_path` is the path to save the prepared dataset.
 
-  peptides <- read.delim(raw_data_path)
+  print("  DEBUG - Generating dataset from protein .tsv...")
+  print("  DEBUG - Reading the .tsv file...")
+  proteins <- read.delim(raw_data_path) |> dplyr::filter(Organism != "")
   # Identify columns with quantitative expression values
-  ecols <- grep("Intensity.", names(peptides))
+  print("  DEBUG - Identifying columns with quantitative expression values...")
+  ecols <- grep("_\\d+\\.Intensity", names(proteins))
   # Identify pooled samples from the data if present and remove it
-  if (any(grepl("pool", names(peptides[ecols]), ignore.case = TRUE))) {
-    ecols <- ecols[!grepl("pool", names(peptides[ecols]), ignore.case = TRUE)]
+  print("  DEBUG - Identifying and removing pooled samples...")
+  if (any(grepl("pool", names(proteins[ecols]), ignore.case = TRUE))) {
+    ecols <- ecols[!grepl("pool", names(proteins[ecols]), ignore.case = TRUE)]
   }
+  # Remove entries flagged as common contaminants
+  print("  DEBUG - Removing entries flagged as common contaminants...")
+  contaminant_rows <- grep("contam_sp", proteins$Protein)
+  proteins <- proteins[-contaminant_rows, ]
   # Create an S4 object, QFeatures type
+  print("  DEBUG - Creating QFeatures object...")
   s4 <- QFeatures::readQFeatures(
-    table = raw_data_path, # peptide data
+    table = proteins, # protein data
     ecol = ecols, # expression indexes
     fnames = 1, # feature names
     name = "raw", # raw assay name
     sep = "\t" # separator for tabular data
   )
   # Add column with number of non-zero values to assay array
+  print("  DEBUG - Adding column with number of non-zero values...")
   rowData(s4[[1]])$nNonZero <- rowSums(assay(s4[[1]]) > 0)
   # Replace zeroes with NA in S4 object
+  print("  DEBUG - Replacing zeroes with NA...")
   s4 <- QFeatures::zeroIsNA(object = s4, i = "raw")
-  # Remove contaminant peptides
-  s4 <- QFeatures::filterFeatures(
-    object = s4,
-    filter = ~Potential.contaminant != "+"
-  )
-  # Remove decoys
-  s4 <- QFeatures::filterFeatures(object = s4, filter = ~Reverse != "+")
   # Remove proteins present in < 2 replicates
+  print("  DEBUG - Removing proteins present in < 2 replicates...")
   s4 <- QFeatures::filterFeatures(object = s4, filter = ~nNonZero > 1)
-  # Remove overlapping proteins
-  filter <- rowData(s4[[1]])$Proteins %in%
-    msqrob2::smallestUniqueGroups(rowData(s4[[1]])$Proteins)
-  s4 <- s4[filter, , ]
-  # Normalize by quantiles
-  s4 <- normalize(
-    object = s4, # S4 peptide data
-    i = "raw", # log expression data
-    name = "norm", # norm assay name
-    method = "quantiles" # normalization method
-  )
   # Log2-transform peptide data #### ****** modified here
+  print("  DEBUG - Log2-transforming peptide data...")
   s4 <- QFeatures::logTransform(
     object = s4, # S4 peptide data
-    i = "norm", # raw expression matrix
+    i = "raw", # raw expression matrix
     name = "log", # log assay name
     base = 2
   )
-  # Summarize peptide to protein
-  s4 <- QFeatures::aggregateFeatures(
+  # Normalize by median centring
+  print("  DEBUG - Normalizing by median centring...")
+  s4 <- normalize(
     object = s4, # S4 peptide data
-    i = "log", # normalized expression data
-    name = "prot", # protein assay name
-    fcol = "Proteins", # rowData variable for aggregation
-    fun = MsCoreUtils::robustSummary, # quantitative aggregation function
+    i = "log", # log expression data
+    name = "norm", # norm assay name
+    method = "center.median" # normalization method
   )
   # Extract summarized protein data
-  protein_data <- dplyr::as_tibble(assay(s4[[4]]))
-  protein_data$Protein <- rowData(s4[[4]])$Leading.razor.protein
-  protein_data$Gene <- rowData(s4[[4]])$Gene.names
-  protein_data$Identifiers <- rowData(s4[[4]])$Proteins
-  colnames(protein_data) <- gsub("Intensity.", "", colnames(protein_data))
+  print("  DEBUG - Extracting summarized protein data...")
+  protein_data <- dplyr::as_tibble(assay(s4[["norm"]]))
+  protein_data$Protein <- rowData(s4[["norm"]])$Protein.ID
+  protein_data$Gene <- rowData(s4[["norm"]])$Gene
+  protein_data$Identifiers <- rowData(s4[["norm"]])$Entry.Name
+  colnames(protein_data) <- sub(".Intensity", "", colnames(protein_data))
   protein_data <- protein_data |>
     dplyr::relocate(Identifiers, Protein, Gene) |>
     dplyr::arrange(Protein)
   # Save to file
+  print("  DEBUG - Saving to file...")
   openxlsx::write.xlsx(
     x = protein_data,
     file = dataset_path
@@ -161,17 +158,22 @@ pca_data <- function(protein_data, pca_data_path) {
   # The `protein_data` is the already loaded and prepared protein data.
   # The `pca_data_path` is the output file path.
 
+  print("  DEBUG - Preparing data for PCA plot...")
+  print("  DEBUG - Selecting numeric columns...")
   protein_pca <- protein_data |>
     dplyr::select_if(is.numeric)
   # Identify and remove rows with missing values
+  print("  DEBUG - Identifying and removing rows with missing values...")
   protein_pca$nZero <- apply(protein_pca, 1, function(x) sum(is.na(x)))
   protein_pca <- protein_pca |>
     dplyr::filter(!nZero > 0)
   # Format data set as a transposed matrix
+  print("  DEBUG - Formatting data set as a transposed matrix...")
   protein_pca_matrix <- t(protein_pca[, 1:(ncol(protein_pca) - 1)])
   # Save to file
-  protein_pca_df <- as.data.frame(protein_pca_matrix)
-  openxlsx::write.xlsx(x = protein_pca_df,
+  print("  DEBUG - Saving PCA data to file...")
+  protein_pca_matrix <- as.data.frame(protein_pca_matrix)
+  openxlsx::write.xlsx(x = protein_pca_matrix,
                        file = pca_data_path,
                        rowNames = TRUE, overwrite = TRUE)
 }
@@ -183,28 +185,35 @@ heatmap_data <- function(protein_data, heatmaps_path) {
   # The `protein_data` is the already loaded and prepared protein data.
   # The `heatmaps_path` is the output file path.
 
+  print("  DEBUG - Preparing data for Heatmap plot...")
+  print("  DEBUG - Selecting numeric columns...")
   protein_heatmap <- protein_data
   # Handle missing values in the data set
+  print("  DEBUG - Handling missing values...")
   protein_heatmap$nZero <- rowSums(is.na(
     dplyr::select_if(protein_heatmap, is.numeric)
   ))
   # Exclude variables with only missing values
+  print("  DEBUG - Excluding variables with only missing values...")
   total_n_var <- ncol(dplyr::select_if(protein_heatmap, is.numeric)) - 1
   if (any(protein_heatmap$nZero == total_n_var)) {
     protein_heatmap <- protein_heatmap[!protein_heatmap$nZero == total_n_var, ]
   }
   # Exclude variables with missing values > 25%
+  print("  DEBUG - Excluding variables with missing values > 25%...")
   if (any(protein_heatmap$nZero > (total_n_var * 0.25))) {
     protein_heatmap <-
       protein_heatmap[protein_heatmap$nZero < (total_n_var * 0.25), ]
   }
   # Handling multiple identifiers
+  print("  DEBUG - Handling multiple identifiers...")
   if (any(grepl(";", protein_heatmap$Gene) == TRUE)) {
     mult_ids <- grep(";", protein_heatmap$Gene)
     ids <- sub(";.*", "", protein_heatmap$Gene[mult_ids])
     protein_heatmap$Gene[mult_ids] <- ids
   }
   # Handling missing identifiers
+  print("  DEBUG - Handling missing identifiers...")
   missing_ids <- which(is.na(protein_heatmap$Gene) | protein_heatmap$Gene == "")
   protein_heatmap$Gene[missing_ids] <- protein_heatmap$Protein[missing_ids]
 
@@ -214,6 +223,7 @@ heatmap_data <- function(protein_data, heatmaps_path) {
     dplyr::ungroup() |>
     dplyr::select(!nZero)
   # Save to file
+  print("  DEBUG - Saving Heatmap data to file...")
   openxlsx::write.xlsx(x = protein_heatmap,
                        file = heatmaps_path,
                        overwrite = TRUE)

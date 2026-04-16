@@ -16,8 +16,7 @@ custom_theme <- bslib::bs_theme(
   bg = "#FFFFFF",
   fg = "#000000",
   primary = "#660099",
-  secondary = "#999999",
-  base_font = bslib::font_google("Open Sans")
+  secondary = "#999999"
 )
 
 
@@ -46,7 +45,7 @@ app_ui <- function(request) {
         div(
           id = "header-title",
           class = "header-item",
-          p(id = "department", "The Lennon Lab"),
+          p(id = "department", ""),
           p(id = "header-appname", "proteinBASE")
         ),
         div(
@@ -88,15 +87,16 @@ app_ui <- function(request) {
               selectInput(
                 inputId = "dataset",
                 label = "Choose a dataset:",
-                choices = gsub(
-                  pattern = "\\.xlsx$",
-                  "",
-                  list.files(
+                choices = {
+                  files <- list.files(
                     path = "data/datasets/",
                     pattern = "\\.xlsx$",
                     full.names = FALSE
-                  ),
-                )
+                  )
+                  input_values <- gsub(pattern = "\\.xlsx$", replacement = "", x = files)
+                  display_names <- gsub(pattern = "_", replacement = " ", x = input_values)
+                  setNames(object = input_values, nm = display_names)
+                },
               ),
             ),
             div(

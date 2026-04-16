@@ -4,3 +4,4 @@ app/data/*
 .Rhistory
 .RData
 .secret*
+proxy_data/
