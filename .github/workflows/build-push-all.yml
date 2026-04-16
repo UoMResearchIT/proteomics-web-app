@@ -35,6 +35,8 @@ jobs:
       pb-base: ${{ steps.filter.outputs.pb-base }}
       rclient: ${{ steps.filter.outputs.rclient }}
       shinyapp: ${{ steps.filter.outputs.shinyapp }}
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
         with:
