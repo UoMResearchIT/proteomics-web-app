@@ -85,7 +85,10 @@ jobs:
   
   rclient:
     needs: [detect-changes, pb-base]
-    if: ${{ needs.detect-changes.outputs.rclient == 'true' || (github.event_name == 'workflow_dispatch' && github.event.inputs.custom_tag == 'latest') }}
+    if: |
+      always() &&
+      (needs.pb-base.result == 'skipped' || needs.pb-base.result == 'success') &&
+      (needs.detect-changes.outputs.rclient == 'true' || (github.event_name == 'workflow_dispatch' && github.event.inputs.custom_tag == 'latest'))
     uses: ./.github/workflows/build-test-push.yml
     with:
       container_name: pb-rclient
@@ -102,7 +105,10 @@ jobs:
   
   shinyapp:
     needs: [detect-changes, pb-base]
-    if: ${{ needs.detect-changes.outputs.shinyapp == 'true' || (github.event_name == 'workflow_dispatch' && github.event.inputs.custom_tag == 'latest') }}
+    if: |
+      always() &&
+      (needs.pb-base.result == 'skipped' || needs.pb-base.result == 'success') &&
+      (needs.detect-changes.outputs.shinyapp == 'true' || (github.event_name == 'workflow_dispatch' && github.event.inputs.custom_tag == 'latest'))
     uses: ./.github/workflows/build-test-push.yml
     with:
       container_name: pb-shinyapp
