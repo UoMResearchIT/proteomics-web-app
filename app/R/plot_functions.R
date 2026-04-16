@@ -10,6 +10,20 @@ library(dplyr)
 #### Settings ####
 font_family_web <- "Open Sans Local, Open Sans, Arial, sans-serif"
 font_family_grid <- "sans" # grid-based plots need to use fonts from the system
+# Paul Tol colorblind-safe palette
+cb_palette <- c(
+  "#332288",
+  "#117733",
+  "#AA4499",
+  "#DDCC77",
+  "#88CCEE",
+  "#882255",
+  "#44AA99",
+  "#CC6677",
+  "#999933",
+  "#DDDDDD"
+)
+cb_colors <- function(n) rep_len(cb_palette, n)
 title_fontsize <- 14
 label_fontsize <- 13
 # Fonts in complex heatmaps are smaller, so added an extra pt.
@@ -71,6 +85,7 @@ pca_plot <- function(matrix) {
         theme(text = element_text(family = font_family_web, size = title_fontsize),
           axis.text.x = element_text(size = label_fontsize),
           axis.text.y = element_text(size = label_fontsize)) +
+    scale_color_manual(values = cb_colors(nlevels(coord$group))) +
     guides(shape = "none")
   return(pca_plot)
 }
@@ -199,6 +214,7 @@ bar_plot <- function(gene_dropdown, df) {
           axis.text.x = element_text(size = label_fontsize, angle = 45),
           axis.text.y = element_text(size = label_fontsize),
           legend.position = "none") +
+    scale_fill_manual(values = cb_colors(length(unique(df_plot$experiment_type)))) +
     labs(NULL)
   return(p)
 }
@@ -225,6 +241,7 @@ box_plot <- function(gene_dropdown, df) {
     theme(text = element_text(family = font_family_web, size = title_fontsize),
           axis.text.x = element_text(size = label_fontsize),
           axis.text.y = element_text(size = label_fontsize),
-          legend.position = "none")
+          legend.position = "none") +
+    scale_fill_manual(values = cb_colors(length(unique(df_plot$experiment_type))))
   return(p)
 }
