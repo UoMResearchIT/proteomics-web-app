@@ -70,7 +70,7 @@ jobs:
 
       - name: Version
         id: version
-        uses: paulhatch/semantic-version@v6
+        uses: paulhatch/semantic-version@v6.0.2
         with:
           namespace: ${{ env.CONTAINER_NAME }}
           tag_prefix: "v"
