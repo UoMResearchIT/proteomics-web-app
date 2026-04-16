@@ -12,7 +12,7 @@ on:
         description: "Push custom tag? (leave blank to skip)"
         required: false
         type: string
-        default: ""
+        default: "latest"
   push:
     branches: ["main", "dev"]
     paths:
@@ -85,7 +85,7 @@ jobs:
   
   rclient:
     needs: [detect-changes, pb-base]
-    if: ${{ needs.detect-changes.outputs.rclient == 'true' || github.event_name == 'workflow_dispatch' }}
+    if: ${{ needs.detect-changes.outputs.rclient == 'true' || (github.event_name == 'workflow_dispatch' && github.event.inputs.custom_tag == 'latest') }}
     uses: ./.github/workflows/build-test-push.yml
     with:
       container_name: pb-rclient
@@ -102,7 +102,7 @@ jobs:
   
   shinyapp:
     needs: [detect-changes, pb-base]
-    if: ${{ needs.detect-changes.outputs.shinyapp == 'true' || github.event_name == 'workflow_dispatch' }}
+    if: ${{ needs.detect-changes.outputs.shinyapp == 'true' || (github.event_name == 'workflow_dispatch' && github.event.inputs.custom_tag == 'latest') }}
     uses: ./.github/workflows/build-test-push.yml
     with:
       container_name: pb-shinyapp
