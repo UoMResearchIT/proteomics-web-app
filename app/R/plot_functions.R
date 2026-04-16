@@ -26,15 +26,15 @@ cb_palette <- c(
 cb_colors <- function(n) rep_len(cb_palette, n)
 title_fontsize <- 14
 label_fontsize <- 13
-# Fonts in complex heatmaps are smaller, so added an extra pt.
+# Separate control for complex heatmaps fonts, as they use grid graphics
 title_font_gp <- function() {
-  title_fonts <- gpar(fontsize = title_fontsize + 1,
+  title_fonts <- gpar(fontsize = title_fontsize - 1,
                       fontface = "bold",
                       fontfamily = font_family_grid)
   return(title_fonts)
 }
 label_font_gp <- function() {
-  label_fonts <- gpar(fontsize = label_fontsize + 1,
+  label_fonts <- gpar(fontsize = label_fontsize - 1,
                       fontfamily = font_family_grid)
   return(label_fonts)
 }
@@ -156,7 +156,12 @@ make_heatmap <- function(data, heatmap_colors) {
       labels_gp = label_font_gp()
     )
   )
-  dht <- draw(ht, merge_legend = TRUE, newpage = FALSE)
+  dht <- draw(
+    ht,
+    merge_legend = TRUE,
+    newpage = FALSE,
+    padding = unit(c(2, 2, 2, 6), "mm")
+  )
   return(dht)
 }
 
