@@ -33,10 +33,27 @@ title_font_gp <- function() {
                       fontfamily = font_family_grid)
   return(title_fonts)
 }
-label_font_gp <- function() {
-  label_fonts <- gpar(fontsize = label_fontsize - 1,
-                      fontfamily = font_family_grid)
-  return(label_fonts)
+label_font_gp <- function(legend_labels = NULL) {
+  if (is.null(legend_labels)) {
+    label_fonts <- gpar(fontsize = label_fontsize - 1,
+                        fontfamily = font_family_grid)
+    return(label_fonts)
+  }
+  # Characterize size of legend to adjust font size accordingly
+  longest_legend <- if (length(legend_labels) == 0) { 0 } else {
+    max(nchar(legend_labels), na.rm = TRUE) }
+  n_items <- length(legend_labels)
+  legend_size_factor <- max(longest_legend*2, n_items*2)
+  # Calculate font size and return legend parameters
+  legend_fontsize <- calculate_row_fontsize(legend_size_factor)
+  legend_ncol <- if (legend_fontsize <= 3) 2 else 1
+  legend_key_size <- max(legend_fontsize * 0.42, 1)
+  return(list(
+    ncol = legend_ncol,
+    labels_gp = gpar(fontsize = legend_fontsize, fontfamily = font_family_grid),
+    grid_width = unit(legend_key_size, "mm"),
+    grid_height = unit(legend_key_size, "mm")
+  ))
 }
 
 ##### Plotting scripts ####
@@ -126,9 +143,9 @@ top_annotation <- function(data, heatmap_colors, legend = TRUE) {
     show_annotation_name = TRUE,
     annotation_name_side = "left",
     annotation_name_gp = label_font_gp(),
-    annotation_legend_param = list(
-      title_gp = title_font_gp(),
-      labels_gp = label_font_gp()
+    annotation_legend_param = c(
+      list(title_gp = title_font_gp()),
+      label_font_gp(unique(c(samples_lab, groups_lab)))
     ),
     show_legend = legend
   )
