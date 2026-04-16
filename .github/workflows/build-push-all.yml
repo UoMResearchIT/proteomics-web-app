@@ -32,17 +32,29 @@ jobs:
   detect-changes:
     runs-on: ubuntu-latest
     outputs:
-      pb-base: ${{ steps.filter.outputs.pb-base }}
-      rclient: ${{ steps.filter.outputs.rclient }}
-      shinyapp: ${{ steps.filter.outputs.shinyapp }}
+      pb-base: ${{ steps.manual.outputs.pb-base || steps.filter.outputs.pb-base }}
+      rclient: ${{ steps.manual.outputs.rclient || steps.filter.outputs.rclient }}
+      shinyapp: ${{ steps.manual.outputs.shinyapp || steps.filter.outputs.shinyapp }}
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout the repo
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: dorny/paths-filter@v1
+
+      - name: Set manual-dispatch outputs
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        id: manual
+        run: |
+          echo "pb-base=true" >> "$GITHUB_OUTPUT"
+          echo "rclient=true" >> "$GITHUB_OUTPUT"
+          echo "shinyapp=true" >> "$GITHUB_OUTPUT"
+
+      - name: Filter changed paths
+        if: ${{ github.event_name != 'workflow_dispatch' }}
         id: filter
+        uses: dorny/paths-filter@v4
         with:
           filters: |
             pb-base:
