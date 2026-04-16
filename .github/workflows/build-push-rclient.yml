@@ -28,8 +28,6 @@ jobs:
         exit 0
       push_vb: ${{ github.event.inputs.push_vb == 'true' }}
       custom_tag: ${{ github.event.inputs.custom_tag }}
-    secrets:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     permissions:
       contents: read
       packages: write
