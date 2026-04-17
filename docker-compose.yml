@@ -77,9 +77,28 @@ services:
     volumes:
       - ${PWD}/app/data:/app/data
 
+  dozzle:
+    image: amir20/dozzle:latest
+    container_name: pB-dozzle
+    restart: unless-stopped
+    environment:
+      - DOZZLE_AUTH_PROVIDER=simple
+    ports:
+      - '8080:8080'
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - dozzle:/data
+    secrets:
+      - source: users
+        target: /data/users.yml
+
+secrets:
+  users:
+    file: ./dozzle/config/.secret_users.yml
 volumes:
   rabbitmq_data:
     driver: local
   minio_s3data:
   nginx-proxy:
   nginx-certs:
+  dozzle:

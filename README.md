@@ -9,6 +9,27 @@ The proteinBASE site has two parts:
  Uploading a raw dataset triggers a workflow for pre-processing the data.
  Once the data is pre-processed, it is copied to the website's database, and becomes available to users.
 
+## Table of Contents
+- [proteinBASE](#proteinbase)
+    - [Table of Contents](#table-of-contents)
+    - [Adding a new dataset](#adding-a-new-dataset)
+    - [Adding dataset information](#adding-dataset-information)
+    - [Deleting a dataset](#deleting-a-dataset)
+    - [Editing the app content pages](#editing-the-app-content-pages)
+    - [Deploying the shiny app](#deploying-the-shiny-app)
+        - [Clone this repository](#clone-this-repository)
+        - [Installing docker](#installing-docker)
+        - [One time setup](#one-time-setup)
+            - [Minio keys](#minio-keys)
+            - [Dozzle users](#dozzle-users)
+            - [Proxy setting](#proxy-setting)
+            - [SSL certificates](#ssl-certificates)
+    - [Debugging](#debugging)
+        - [Dozzle](#dozzle)
+        - [Debugging through ssh](#debugging-through-ssh)
+            - [Logs](#logs)
+            - [Docker exec](#docker-exec)
+
 ## Adding a new dataset
 New datasets, need to be uploaded to the raw-datasets directory in the minio server.
 
@@ -45,7 +66,7 @@ Use the same procedure as for the dataset information files to edit the content 
 # Deploying the shiny app
 The service is orquestrated using docker-compose, so the server must have a working installation of docker.
 
-### Clone this repository
+## Clone this repository
 You will need git installed to clone this repo.
 ```
 sudo apt update
@@ -54,7 +75,7 @@ sudo apt install -y git
 git clone https://github.com/UoMResearchIT/proteomics-web-app.git proteinBASE
 ```
 
-### Installing docker
+## Installing docker
 On an ubuntu system, you can install docker and docker compose using this [convinience script](https://docs.docker.com/engine/install/ubuntu/#install-using-the-convenience-script), in summary, run:
 ```
 sudo apt update
@@ -79,7 +100,7 @@ docker pull quay.io/minio/minio:latest
 docker pull jc21/nginx-proxy-manager:latest
 ```
 
-### One time setup
+## One time setup
 Navigate to the cloned repo directory.
 ```
 cd proteinBASE
@@ -92,7 +113,7 @@ Now we can spin up minio for the first time:
 ```
 docker compose up minio proxy -d
 ```
-#### Minio keys
+### Minio keys
 On a browser, use the url of the machine serving the site to configure the minio keys.
 For example, if the ip is 10.20.30.40, in a browser go to
 ```
@@ -112,8 +133,21 @@ Once the keys are in the right place, you can use the bootstrap script:
 ```
 ./db/config/bootstrap.sh
 ```
+### Dozzle users
+User credentials for the dozzle service are configured in `./dozzle/config/.secret_users.yml`.
 
-#### Proxy setting
+To generate new users, you may use the `add_dozzle_user.sh` script:
+```
+./dozzle/add_dozzle_user.sh -u 'user_name' -e 'user@email.com' -n 'Full User Name' -v
+```
+
+This will generate a new user with the specified name, email, and full name.
+It will also generate a random password and print it to the console.
+
+**Note:** Make sure to take note of the password, as it will not be shown again.
+Alternatively, you can provide a password with the `-p` option, or save the generated password to a file with the `-s` option.
+
+### Proxy setting
 On a browser, use the url of the machine serving the site to configure the proxy.
 For example, if the ip is 10.20.30.40, in a browser go to
 ```
@@ -139,13 +173,34 @@ Forward Hostname: pB-minio
 Forward Port: 9001
 Websockets Support: On
 ```
-Traffic should now be forwarded to the right frontentd for each domain.
+```
+Name: debug.proteinBASE.manchester.ac.uk
+Forward Hostname: pB-dozzle
+Forward Port: 8080
+Websockets Support: On
+```
+Traffic should now be forwarded to the right frontend for each domain.
 
 ### SSL certificates
+Load the ssl certificates in the "SSL Certificates" section of the proxy manager.
+Then, select the corresponding certificate for each domain in the proxy host settings.
 
-### Debugging
+# Debugging
 
-#### Logs
+## Dozzle
+The dozzle service provides a web interface to view the logs of all the other services in the compose stack.
+To access it, go to the url of the machine serving the site, on port 8080. For example:
+```
+http://10.20.30.40:8080
+```
+Log in with the credentials you set up in the previous steps, and you should be able to see the logs of all the services in real time.
+
+The dozzle service is configured for log viewing only, so you cannot interact with the containers.
+
+## Debugging through ssh
+If you have ssh access to the server, you can also debug the services through the command line.
+
+### Logs
 An important access point for debugging the site is the docker compose logs.
 
 You can access all of the logs together with:
@@ -166,7 +221,7 @@ The services are as follows:
 - **rabbitmq**: The message broker used to connect the minio and rclient services.
 - **proxy**: The nginx proxy manager, in charge of the domain routing.
 
-#### Docker exec
+### Docker exec
 
 Another useful tool for debugging is the docker exec command, which allows you to jump inside of one of the running containers.
 
