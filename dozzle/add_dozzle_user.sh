@@ -91,6 +91,10 @@ cd "$(dirname "$0")" || {
     echo "Error: Failed to change directory to script location."
     exit 1
 }
+mkdir -p ./config || {
+    echo "Error: Failed to create config directory."
+    exit 1
+}
 # Make sure user does not already exist
 if [ -f ./config/.secret_users.yml ] && grep -q " ${user_name}:" ./config/.secret_users.yml; then
     echo "ERROR: User '$user_name' already exists."
