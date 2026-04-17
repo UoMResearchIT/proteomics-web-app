@@ -173,6 +173,12 @@ Forward Hostname: pB-minio
 Forward Port: 9001
 Websockets Support: On
 ```
+```
+Name: debug.proteinBASE.manchester.ac.uk
+Forward Hostname: pB-dozzle
+Forward Port: 8080
+Websockets Support: On
+```
 Traffic should now be forwarded to the right frontend for each domain.
 
 ### SSL certificates
