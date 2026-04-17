@@ -112,6 +112,19 @@ Once the keys are in the right place, you can use the bootstrap script:
 ```
 ./db/config/bootstrap.sh
 ```
+#### Dozzle users
+User credentials for the dozzle service are configured in `./dozzle/config/.secret_users.yml`.
+
+To generate new users, you may use the `add_dozzle_user.sh` script:
+```
+./dozzle/add_dozzle_user.sh -u 'user_name' -e 'user@email.com' -n 'Full User Name' -v
+```
+
+This will generate a new user with the specified name, email, and full name.
+It will also generate a random password and print it to the console.
+
+**Note:** Make sure to take note of the password, as it will not be shown again.
+Alternatively, you can provide a password with the `-p` option, or save the generated password to a file with the `-s` option.
 
 #### Proxy setting
 On a browser, use the url of the machine serving the site to configure the proxy.
