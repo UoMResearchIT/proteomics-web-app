@@ -56,6 +56,15 @@ label_font_gp <- function(legend_labels = NULL) {
   ))
 }
 
+clean_sample_label_text <- function(x) {
+  gsub("_", " ", x)
+}
+
+clean_group_label_text <- function(x) {
+  clean_sample_label_text(sub("_\\d+$", "", x))
+}
+
+
 ##### Plotting scripts ####
 
 #### TAB 1 ####
@@ -78,8 +87,8 @@ pca_plot <- function(matrix) {
   )
   # Extract from 'pca_protein' coordinates for the PCA plot
   coord <- as.data.frame(round(pca_protein$variates$X, digits = 2))
-  coord$group <- as.factor(gsub("_\\d+", "", rownames(coord)))
-  coord$sampleName <- gsub("_", " ", rownames(coord))
+  coord$group <- as.factor(clean_group_label_text(rownames(coord)))
+  coord$sampleName <- clean_sample_label_text(rownames(coord))
   # Extract labels for x and y axes
   labels.pca <- as.vector(pca_protein$cum.var)
   xlabel <- paste0("PC1, ",
@@ -120,10 +129,10 @@ generate_heatmap_colors <- function(data) {
                                   colors = c("blue", "white", "red"),
                                   space = "sRGB")
   # Create color lists for samples and groups labels
-  samples_names <- sub("_", " ", colnames(x)) # for sample annotation
+  samples_names <- clean_sample_label_text(colnames(x))
   samples_colors <- rainbow(length(samples_names))
   col_samples <- setNames(samples_colors, samples_names)
-  group_names <- sub("_\\d+", "", colnames(x)) |> as.factor() |> levels()
+  group_names <- clean_group_label_text(colnames(x)) |> as.factor() |> levels()
   group_colors <- hcl.colors(length(group_names))
   col_group <- setNames(group_colors, group_names)
 
@@ -133,8 +142,8 @@ generate_heatmap_colors <- function(data) {
 }
 
 top_annotation <- function(data, heatmap_colors, legend = TRUE) {
-  samples_lab <- sub("_", " ", colnames(data))
-  groups_lab <- sub("_\\d+", "", colnames(data))
+  samples_lab <- clean_sample_label_text(colnames(data))
+  groups_lab <- clean_group_label_text(colnames(data))
   top_annotation <- HeatmapAnnotation(
     Samples = samples_lab,
     Groups = groups_lab,
@@ -213,18 +222,24 @@ make_sub_heatmap <- function(data, heatmap_colors) {
 }
 
 #### TAB 3 ####
+prepare_gene_plot_data <- function(gene_dropdown, df) {
+  df |>
+    filter(Gene == gene_dropdown) |>
+    mutate(
+      experiment_label = clean_sample_label_text(experiment),
+      experiment_type = clean_group_label_text(experiment)
+    ) |>
+    filter(!is.na(expression))
+}
 bar_plot <- function(gene_dropdown, df) {
   ## TODO: Sort out Warning: Removed x rows containing missing values
   if (!(gene_dropdown %in% df$Gene)) {
     return()
   }
-  df_plot <- df |>
-    filter(Gene == gene_dropdown) |>
-    mutate(experiment_type = str_extract(experiment, "[A-Z]+")) |>
-    filter(!is.na(expression))
-  p <- ggplot(data = df_plot, aes(x = experiment, y = expression))
+  df_plot <- prepare_gene_plot_data(gene_dropdown, df)
+  p <- ggplot(data = df_plot, aes(x = experiment_label, y = expression))
   p <- p +
-    geom_bar(mapping = aes(x = experiment,
+    geom_bar(mapping = aes(x = experiment_label,
                            y = expression,
                            fill = experiment_type),
              stat = "identity",
@@ -244,10 +259,7 @@ box_plot <- function(gene_dropdown, df) {
   if (!(gene_dropdown %in% df$Gene)) {
     return()
   }
-  df_plot <- df |>
-    filter(Gene == gene_dropdown) |>
-    mutate(experiment_type = str_extract(experiment, "[A-Z]+")) |>
-    filter(!is.na(expression))
+  df_plot <- prepare_gene_plot_data(gene_dropdown, df)
   p <- ggplot(data = df_plot, aes(x = experiment_type, y = expression))
   p <- p +
     geom_boxplot(mapping = aes(x = experiment_type,
@@ -261,7 +273,7 @@ box_plot <- function(gene_dropdown, df) {
     scale_y_continuous(name = "Normalized Log2-protein intensity") +
     theme_light() +
     theme(text = element_text(family = font_family_web, size = title_fontsize),
-          axis.text.x = element_text(size = label_fontsize),
+          axis.text.x = element_text(size = label_fontsize, angle = 45),
           axis.text.y = element_text(size = label_fontsize),
           legend.position = "none") +
     scale_fill_manual(values = cb_colors(length(unique(df_plot$experiment_type))))
