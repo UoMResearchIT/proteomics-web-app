@@ -78,7 +78,7 @@ pca_plot <- function(matrix) {
   )
   # Extract from 'pca_protein' coordinates for the PCA plot
   coord <- as.data.frame(round(pca_protein$variates$X, digits = 2))
-  coord$group <- as.factor(gsub("_\\d+$", "", rownames(coord)))
+  coord$group <- as.factor(gsub("_", " ", gsub("_\\d+$", "", rownames(coord))))
   coord$sampleName <- gsub("_", " ", rownames(coord))
   # Extract labels for x and y axes
   labels.pca <- as.vector(pca_protein$cum.var)
@@ -120,10 +120,10 @@ generate_heatmap_colors <- function(data) {
                                   colors = c("blue", "white", "red"),
                                   space = "sRGB")
   # Create color lists for samples and groups labels
-  samples_names <- sub("_", " ", colnames(x)) # for sample annotation
+  samples_names <- gsub("_", " ", colnames(x)) # for sample annotation
   samples_colors <- rainbow(length(samples_names))
   col_samples <- setNames(samples_colors, samples_names)
-  group_names <- sub("_\\d+$", "", colnames(x)) |> as.factor() |> levels()
+  group_names <- gsub("_", " ", sub("_\\d+$", "", colnames(x))) |> as.factor() |> levels()
   group_colors <- hcl.colors(length(group_names))
   col_group <- setNames(group_colors, group_names)
 
@@ -133,8 +133,8 @@ generate_heatmap_colors <- function(data) {
 }
 
 top_annotation <- function(data, heatmap_colors, legend = TRUE) {
-  samples_lab <- sub("_", " ", colnames(data))
-  groups_lab <- sub("_\\d+$", "", colnames(data))
+  samples_lab <- gsub("_", " ", colnames(data))
+  groups_lab <- gsub("_", " ", sub("_\\d+$", "", colnames(data)))
   top_annotation <- HeatmapAnnotation(
     Samples = samples_lab,
     Groups = groups_lab,
@@ -220,11 +220,14 @@ bar_plot <- function(gene_dropdown, df) {
   }
   df_plot <- df |>
     filter(Gene == gene_dropdown) |>
-    mutate(experiment_type = sub("_\\d+$", "", experiment)) |>
+    mutate(
+      experiment_label = gsub("_", " ", experiment),
+      experiment_type = gsub("_", " ", sub("_\\d+$", "", experiment))
+    ) |>
     filter(!is.na(expression))
-  p <- ggplot(data = df_plot, aes(x = experiment, y = expression))
+  p <- ggplot(data = df_plot, aes(x = experiment_label, y = expression))
   p <- p +
-    geom_bar(mapping = aes(x = experiment,
+    geom_bar(mapping = aes(x = experiment_label,
                            y = expression,
                            fill = experiment_type),
              stat = "identity",
@@ -246,7 +249,10 @@ box_plot <- function(gene_dropdown, df) {
   }
   df_plot <- df |>
     filter(Gene == gene_dropdown) |>
-    mutate(experiment_type = sub("_\\d+$", "", experiment)) |>
+    mutate(
+      experiment_label = gsub("_", " ", experiment),
+      experiment_type = gsub("_", " ", sub("_\\d+$", "", experiment))
+    ) |>
     filter(!is.na(expression))
   p <- ggplot(data = df_plot, aes(x = experiment_type, y = expression))
   p <- p +
