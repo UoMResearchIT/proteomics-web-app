@@ -64,10 +64,6 @@ clean_group_label_text <- function(x) {
   clean_sample_label_text(sub("_\\d+$", "", x))
 }
 
-clean_sample_number_text <- function(x) {
-  sub("^.*_", "", x)
-}
-
 
 ##### Plotting scripts ####
 
@@ -230,7 +226,6 @@ prepare_gene_plot_data <- function(gene_dropdown, df) {
   df |>
     filter(Gene == gene_dropdown) |>
     mutate(
-      sample_number = clean_sample_number_text(experiment),
       experiment_label = clean_sample_label_text(experiment),
       experiment_type = clean_group_label_text(experiment)
     ) |>
@@ -242,19 +237,18 @@ bar_plot <- function(gene_dropdown, df) {
     return()
   }
   df_plot <- prepare_gene_plot_data(gene_dropdown, df)
-  p <- ggplot(data = df_plot, aes(x = experiment, y = expression))
+  p <- ggplot(data = df_plot, aes(x = experiment_label, y = expression))
   p <- p +
-    geom_bar(mapping = aes(x = experiment,
+    geom_bar(mapping = aes(x = experiment_label,
                            y = expression,
                            fill = experiment_type),
              stat = "identity",
              col = "black") +
     xlab("") +
-    scale_x_discrete(labels = clean_sample_number_text) +
     scale_y_continuous(name = "Normalized Log2-protein intensity") +
     theme_light() +
     theme(text = element_text(family = font_family_web, size = title_fontsize),
-          axis.text.x = element_text(size = label_fontsize),
+          axis.text.x = element_text(size = label_fontsize, angle = 45),
           axis.text.y = element_text(size = label_fontsize),
           legend.position = "none") +
     scale_fill_manual(values = cb_colors(length(unique(df_plot$experiment_type)))) +
