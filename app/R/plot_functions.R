@@ -220,7 +220,7 @@ bar_plot <- function(gene_dropdown, df) {
   }
   df_plot <- df |>
     filter(Gene == gene_dropdown) |>
-    mutate(experiment_type = str_extract(experiment, "[A-Z]+")) |>
+    mutate(experiment_type = sub("_\\d+$", "", experiment)) |>
     filter(!is.na(expression))
   p <- ggplot(data = df_plot, aes(x = experiment, y = expression))
   p <- p +
@@ -246,7 +246,7 @@ box_plot <- function(gene_dropdown, df) {
   }
   df_plot <- df |>
     filter(Gene == gene_dropdown) |>
-    mutate(experiment_type = str_extract(experiment, "[A-Z]+")) |>
+    mutate(experiment_type = sub("_\\d+$", "", experiment)) |>
     filter(!is.na(expression))
   p <- ggplot(data = df_plot, aes(x = experiment_type, y = expression))
   p <- p +
