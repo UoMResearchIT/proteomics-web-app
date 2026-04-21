@@ -78,7 +78,7 @@ pca_plot <- function(matrix) {
   )
   # Extract from 'pca_protein' coordinates for the PCA plot
   coord <- as.data.frame(round(pca_protein$variates$X, digits = 2))
-  coord$group <- as.factor(gsub("_\\d+", "", rownames(coord)))
+  coord$group <- as.factor(gsub("_\\d+$", "", rownames(coord)))
   coord$sampleName <- gsub("_", " ", rownames(coord))
   # Extract labels for x and y axes
   labels.pca <- as.vector(pca_protein$cum.var)
