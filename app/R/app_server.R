@@ -135,6 +135,23 @@ app_server <- function(input, output, session) {
     return(excel_ok)
   })
 
+  highlighted_rows <- reactive({
+    req(heatmap_data())
+    search_terms <- input$subh_gene
+    if (is.null(search_terms) || length(search_terms) == 0) {
+      return(character(0))
+    }
+    row_labels <- rownames(heatmap_data())
+    match_matrix <- sapply(
+      search_terms,
+      function(term) grepl(term, row_labels, ignore.case = TRUE, fixed = TRUE)
+    )
+    if (is.null(dim(match_matrix))) {
+      return(row_labels[match_matrix])
+    }
+    return(row_labels[rowSums(match_matrix) > 0])
+  })
+
   pca_data <- reactive({
     req(input$dataset)
     file_path <- paste0(
@@ -193,7 +210,11 @@ app_server <- function(input, output, session) {
   ht_obj <- reactiveVal(NULL)
   ht_pos_obj <- reactiveVal(NULL)
   .heatmap_plot <- reactive({
-    ht <- make_heatmap(heatmap_data(), ht_colors())
+    ht <- make_heatmap(
+      heatmap_data(),
+      ht_colors(),
+      highlight_rows = highlighted_rows()
+    )
     ht_pos <- htPositionsOnDevice(ht)
     ht_obj(ht)
     ht_pos_obj(ht_pos)
@@ -232,11 +253,9 @@ app_server <- function(input, output, session) {
   })
   # From search textbox
   observeEvent(input$subh_gene, {
-    grep_str <- paste(input$subh_gene, collapse = "|")
-    if (grep_str != "") {
-      output$sub_heat_chosen_genes <- renderPrint(grep_str)
-      sub_rows <- grep(grep_str, rownames(heatmap_data()), ignore.case = TRUE)
-      sub_data(heatmap_data()[sub_rows, ])
+    matching_rows <- highlighted_rows()
+    if (length(input$subh_gene) > 0) {
+      sub_data(heatmap_data()[matching_rows, , drop = FALSE])
       if (nrow(sub_data()) == 0) {
         .subheat_plot(NULL)
         shinyjs::hide("subheat_save_as-save_as_button")
@@ -252,6 +271,7 @@ app_server <- function(input, output, session) {
     } else {
       .subheat_plot(NULL)
       shinyjs::hide("subheat_save_as-save_as_button")
+      shinyjs::show("heatmap_brush")
     }
   })
   output$sub_heat <- renderUI({
