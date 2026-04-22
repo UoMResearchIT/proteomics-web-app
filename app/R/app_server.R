@@ -33,6 +33,7 @@ app_server <- function(input, output, session) {
   #### Automatically get/write parameters from/to url ####
   selected_gene <- reactiveVal("")
   default_gene <- reactiveVal("")
+  selected_search_genes <- reactiveVal(c())
   default_tab <- "PCA"
   observe({
     # Only set bookmarking non-default parameters
@@ -44,23 +45,58 @@ app_server <- function(input, output, session) {
     if (input$view == "data") {
       bookmarking_params <- union(
         bookmarking_params,
-        c("dataset", "gene", "tab")
+        c("dataset", "gene", "subh_gene", "tab")
       )
-      if (input$tab == default_tab) {
-        bookmarking_params <- setdiff(bookmarking_params, "tab")
-      }
+      # Input `gene` for BoxPlot and when gene is not default only
       if ((input$tab != "BoxPlot") || (input$gene == default_gene())) {
         bookmarking_params <- setdiff(bookmarking_params, "gene")
+      }
+      # Input `subh_gene` for HeatMap only.
+      if ((input$tab == "HeatMap") && length(input$subh_gene) > 0) {
+        bookmarking_params <- union(bookmarking_params, "subh_gene")
+      } else {
+        bookmarking_params <- setdiff(bookmarking_params, "subh_gene")
       }
     }
     to_exclude <- setdiff(names(input), bookmarking_params)
     setBookmarkExclude(to_exclude)
     session$doBookmark()
   })
-  onBookmarked(updateQueryString)
+  onBookmarked(function(url) {
+    split_url <- strsplit(url, "\\?", fixed = FALSE)[[1]]
+    base_url <- split_url[1]
+    query <- if (length(split_url) > 1) split_url[2] else ""
+    query_parts <- if (nzchar(query)) strsplit(query, "&", fixed = TRUE)[[1]] else character(0)
+
+    # Always drop stale subh_gene first, then re-add for HeatMap selections (only in data view).
+    query_parts <- query_parts[!grepl("^subh_gene=", query_parts)]
+    if (isTRUE(input$view == "data") && isTRUE(input$tab == "HeatMap") && length(input$subh_gene) > 0) {
+      heatmap_genes <- unique(trimws(sub("\\s*\\(.*$", "", input$subh_gene)))
+      gene_joined <- paste(heatmap_genes, collapse = "_")
+      query_parts <- c(
+        query_parts,
+        paste0("subh_gene=%22", utils::URLencode(gene_joined, reserved = TRUE), "%22")
+      )
+    }
+
+    clean_query <- paste(query_parts, collapse = "&")
+    clean_url <- if (nzchar(clean_query)) {
+      paste0(base_url, "?", clean_query)
+    } else {
+      base_url
+    }
+    updateQueryString(clean_url)
+  })
   onRestore(function(state) {
-    if (!is.null(state$input$gene)) {
-      selected_gene(state$input$gene)
+    if (state$input$tab == "BoxPlot" && !is.null(state$input$gene)) {
+        selected_gene(state$input$gene)
+    }
+    if (state$input$tab == "HeatMap" && !is.null(state$input$subh_gene)) {
+      decoded_genes <- utils::URLdecode(state$input$subh_gene)
+      decoded_genes <- gsub('^"|"$', "", decoded_genes)
+      restored_genes <- trimws(unlist(strsplit(decoded_genes, "[_,]")))
+      restored_genes <- restored_genes[nzchar(restored_genes)]
+      selected_search_genes(restored_genes)
     }
   })
 
@@ -126,10 +162,27 @@ app_server <- function(input, output, session) {
                        ")",
                        sep = "")
     # Update autocomplete choices for search bar
+    # If there are restored search genes, set them as selected
+    # Preserve the order from restored_genes
+    restored_genes <- selected_search_genes()
+    selected_value <- NULL
+    if (length(restored_genes) > 0) {
+      matched_full_names <- character(0)
+      for (gene in restored_genes) {
+        idx <- which(tolower(excel_ok$Gene) == tolower(gene))
+        if (length(idx) > 0) {
+          matched_full_names <- c(matched_full_names, row_names[idx[1]])
+        }
+      }
+      if (length(matched_full_names) > 0) {
+        selected_value <- matched_full_names
+      }
+    }
     updateSelectizeInput(
       session,
       "subh_gene",
-      choices = sort(unique(unlist(row_names))),
+      choices = unique(unlist(row_names)),
+      selected = selected_value,
       server = TRUE
     )
     # Check for duplicated row_names and add a number to make unique
@@ -156,14 +209,18 @@ app_server <- function(input, output, session) {
     }
     row_labels <- rownames(heatmap_data())
     row_labels_lc <- tolower(row_labels)
-    match_matrix <- sapply(
-      search_terms,
-      function(term) grepl(tolower(term), row_labels_lc, fixed = TRUE)
-    )
-    if (is.null(dim(match_matrix))) {
-      return(row_labels[match_matrix])
+
+    # Preserve search order by iterating through search_terms
+    matched_rows <- character(0)
+    for (term in search_terms) {
+      term_lc <- tolower(term)
+      matching_row <- row_labels[grepl(term_lc, row_labels_lc, fixed = TRUE)]
+      if (length(matching_row) > 0) {
+        # Add matching rows that haven't been added yet (avoid duplicates)
+        matched_rows <- c(matched_rows, setdiff(matching_row, matched_rows))
+      }
     }
-    return(row_labels[rowSums(match_matrix) > 0])
+    return(matched_rows)
   })
 
   pca_data <- reactive({
@@ -236,6 +293,7 @@ app_server <- function(input, output, session) {
   })
   output$heatmap <- renderPlot(
     muffle_arrow_warning(.heatmap_plot())
+  )
 
   #### Create sub-heatmap ####
   sub_data <- reactiveVal(NULL)
