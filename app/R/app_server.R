@@ -142,9 +142,10 @@ app_server <- function(input, output, session) {
       return(character(0))
     }
     row_labels <- rownames(heatmap_data())
+    row_labels_lc <- tolower(row_labels)
     match_matrix <- sapply(
       search_terms,
-      function(term) grepl(term, row_labels, ignore.case = TRUE, fixed = TRUE)
+      function(term) grepl(tolower(term), row_labels_lc, fixed = TRUE)
     )
     if (is.null(dim(match_matrix))) {
       return(row_labels[match_matrix])
