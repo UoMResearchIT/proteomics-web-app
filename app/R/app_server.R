@@ -17,6 +17,19 @@ source("R/save_as_button.R")
 app_server <- function(input, output, session) {
   thematic::thematic_shiny()
 
+  # Muffle known grid/font encoding warnings for unicode arrow markers.
+  muffle_arrow_warning <- function(expr) {
+    withCallingHandlers(
+      expr,
+      warning = function(w) {
+        msg <- conditionMessage(w)
+        if (grepl("mbcsToSbcs|conversion failure on ' .*\\u279c'", msg)) {
+          invokeRestart("muffleWarning")
+        }
+      }
+    )
+  }
+
   #### Automatically get/write parameters from/to url ####
   selected_gene <- reactiveVal("")
   default_gene <- reactiveVal("")
@@ -221,7 +234,8 @@ app_server <- function(input, output, session) {
     ht_pos_obj(ht_pos)
     return(ht)
   })
-  output$heatmap <- renderPlot(.heatmap_plot())
+  output$heatmap <- renderPlot(
+    muffle_arrow_warning(.heatmap_plot())
 
   #### Create sub-heatmap ####
   sub_data <- reactiveVal(NULL)
@@ -249,7 +263,7 @@ app_server <- function(input, output, session) {
       updateSelectizeInput(session, "subh_gene", selected = "")
     }
     output$sub_heatmap <- renderPlot({
-      .subheat_plot()
+      muffle_arrow_warning(.subheat_plot())
     })
   })
   # From search textbox
@@ -267,7 +281,7 @@ app_server <- function(input, output, session) {
         shinyjs::hide("heatmap_brush")
       }
       output$sub_heatmap <- renderPlot({
-        .subheat_plot()
+        muffle_arrow_warning(.subheat_plot())
       })
     } else {
       .subheat_plot(NULL)
