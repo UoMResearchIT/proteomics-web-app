@@ -174,7 +174,7 @@ app_ui <- function(request) {
             ),
             #### About the dataset ####
             tabPanel("About the dataset",
-              uiOutput("dataset_info"),
+              div(style = "padding-top: 24px;", uiOutput("dataset_info")),
             ),
           )
         ),
