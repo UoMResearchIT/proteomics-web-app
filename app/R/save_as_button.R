@@ -47,30 +47,39 @@ save_as_ui <- function(id,
       id = NS(id, "save_as_options"),
       style = "display: none;",
       div(
+        style = "display: flex;
+          flex-direction: column;
+          align-items: center;",
+        div(
+          radioButtons(
+            NS(id, "download_format"),
+            label = NULL,
+            choices = list("png",
+                          "svg"),
+            selected = "png",
+            inline = TRUE
+          )
+        ),
+        div(
+          id = NS(id, "resolution_container"),
+          style = "display: flex;
+          flex-direction: row;
+          height: 30px;",
+          numericInput(
+            NS(id, "download_image_resolution"),
+            label = NULL,
+            value = default_dpi,
+            width = "80px",
+          ),
+          span("dpi", style = "margin-left: 5px; margin-top: 5px;")
+        )
+      ),
+      div(
         downloadButton(
           NS(id, "download_button"),
           "Save image",
           class = "btn-info",
-          style = "padding: 20px 10px;"
-        )
-      ),
-      div(
-        radioButtons(
-          NS(id, "download_format"),
-          label = "Format:",
-          choices = list("png",
-                         "svg"),
-          selected = "png",
-          inline = TRUE
-        )
-      ),
-      div(
-        id = NS(id, "resolution_container"),
-        numericInput(
-          NS(id, "download_image_resolution"),
-          label = "Resolution [dpi]",
-          value = default_dpi,
-          width = "120px"
+          style = "padding: 25px 10px;"
         )
       ),
       div(
@@ -116,10 +125,10 @@ save_as_server <- function(id,
     observe({
       req(input$download_format)
       if (identical(input$download_format, "png")) {
-        sel = paste("#", id, "-download_image_resolution", sep = "")
+        sel = paste("#", id, "-resolution_container", sep = "")
         shinyjs::show(selector = sel)
       } else {
-        sel = paste("#", id, "-download_image_resolution", sep = "")
+        sel = paste("#", id, "-resolution_container", sep = "")
         shinyjs::hide(selector = sel)
       }
     })
