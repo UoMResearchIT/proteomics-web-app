@@ -15,7 +15,11 @@ source("R/plot_functions.R")
 source("R/save_as_button.R")
 
 app_server <- function(input, output, session) {
-  thematic::thematic_shiny()
+  thematic::thematic_shiny(
+    bg = "#FFFFFF",
+    fg = "#000000",
+    accent = "#660099"
+  )
 
   # Muffle known grid/font encoding warnings for unicode arrow markers.
   muffle_arrow_warning <- function(expr) {
