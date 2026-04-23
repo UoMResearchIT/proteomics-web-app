@@ -149,3 +149,8 @@ body,
 [id*='output_wrapper'] {
     display: none !important;
 }
+/* Loading state for heatmap plots */
+.recalculating {
+    opacity: 0.5;
+    pointer-events: none;
+}

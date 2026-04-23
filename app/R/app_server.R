@@ -298,6 +298,7 @@ app_server <- function(input, output, session) {
   #### Create sub-heatmap ####
   sub_data <- reactiveVal(NULL)
   .subheat_plot <- reactiveVal(NULL)
+  heatmap_recalculating <- reactiveVal(FALSE)
   # From selection on heamap
   observeEvent(input$heatmap_brush, {
     lt <- getPositionFromBrush(input$heatmap_brush)
@@ -326,6 +327,8 @@ app_server <- function(input, output, session) {
   })
   # From search textbox
   observeEvent(input$subh_gene, {
+    heatmap_recalculating(TRUE)
+    on.exit(heatmap_recalculating(FALSE))
     matching_rows <- highlighted_rows()
     if (length(input$subh_gene) > 0) {
       sub_data(heatmap_data()[matching_rows, , drop = FALSE])
@@ -358,6 +361,28 @@ app_server <- function(input, output, session) {
       ))
     } else {
       return(plotOutput("sub_heatmap", width = 600, height = 500))
+    }
+  })
+
+  # Apply stale state to subheatmap immediately when search or dataset changes
+  observe({
+    input$subh_gene
+    input$dataset
+    shinyjs::addClass(id = "sub_heatmap", class = "recalculating")
+    shinyjs::addClass(id = "heatmap_save_as-save_as_button", class = "recalculating")
+    shinyjs::addClass(id = "heatmap_save_as-save_as_options", class = "recalculating")
+    shinyjs::addClass(id = "subheat_save_as-save_as_button", class = "recalculating")
+    shinyjs::addClass(id = "subheat_save_as-save_as_options", class = "recalculating")
+  }, priority = 1000)
+
+  # Remove stale state after recalculation flag clears
+  observe({
+    if (!heatmap_recalculating()) {
+      shinyjs::removeClass(id = "sub_heatmap", class = "recalculating")
+      shinyjs::removeClass(id = "heatmap_save_as-save_as_button", class = "recalculating")
+      shinyjs::removeClass(id = "heatmap_save_as-save_as_options", class = "recalculating")
+      shinyjs::removeClass(id = "subheat_save_as-save_as_button", class = "recalculating")
+      shinyjs::removeClass(id = "subheat_save_as-save_as_options", class = "recalculating")
     }
   })
 
