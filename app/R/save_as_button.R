@@ -65,6 +65,7 @@ save_as_ui <- function(id,
         )
       ),
       div(
+        id = NS(id, "resolution_container"),
         numericInput(
           NS(id, "download_image_resolution"),
           label = "Resolution [dpi]",
@@ -110,6 +111,17 @@ save_as_server <- function(id,
       shinyjs::hide(selector = sel)
       # Scroll to the bottom of the page
       shinyjs::runjs("window.scrollTo(0,document.body.scrollHeight);")
+    })
+    # Show resolution control for PNG only.
+    observe({
+      req(input$download_format)
+      if (identical(input$download_format, "png")) {
+        sel = paste("#", id, "-download_image_resolution", sep = "")
+        shinyjs::show(selector = sel)
+      } else {
+        sel = paste("#", id, "-download_image_resolution", sep = "")
+        shinyjs::hide(selector = sel)
+      }
     })
     output$download_button <- downloadHandler(
       filename = function() {
