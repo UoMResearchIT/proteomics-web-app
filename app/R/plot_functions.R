@@ -147,8 +147,23 @@ top_annotation <- function(data, heatmap_colors, legend = TRUE) {
   return(top_annotation)
 }
 
-make_heatmap <- function(data, heatmap_colors) {
+make_heatmap <- function(data, heatmap_colors, highlight_rows = character(0)) {
   data_m <- as.matrix(select_if(data, is.numeric))
+  matched_rows <- unique(highlight_rows[highlight_rows %in% rownames(data_m)])
+  row_side_annotation <- NULL
+  if (length(matched_rows) > 0) {
+    row_marks <- ifelse(rownames(data_m) %in% matched_rows, " ➜", "")
+    row_side_annotation <- rowAnnotation(
+      Search = anno_text(
+        row_marks,
+        just = "left",
+        gp = gpar(col = "#AA77CC", fontsize = 11, fontface = "bold")
+      ),
+      width = unit(4, "mm"),
+      show_annotation_name = FALSE,
+      show_legend = FALSE
+    )
+  }
   set.seed(3)
   ht <- ComplexHeatmap::Heatmap(
     data_m,
@@ -162,6 +177,7 @@ make_heatmap <- function(data, heatmap_colors) {
     row_title_gp = title_font_gp(),
     column_title = "",
     row_dend_width = unit(1.5, "cm"),
+    left_annotation = row_side_annotation,
     top_annotation = top_annotation(data_m, heatmap_colors),
     heatmap_legend_param = list(
       title_gp = title_font_gp(),

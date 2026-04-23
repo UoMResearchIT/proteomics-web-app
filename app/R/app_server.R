@@ -17,9 +17,24 @@ source("R/save_as_button.R")
 app_server <- function(input, output, session) {
   thematic::thematic_shiny()
 
+  # Muffle known grid/font encoding warnings for unicode arrow markers.
+  muffle_arrow_warning <- function(expr) {
+    withCallingHandlers(
+      expr,
+      warning = function(w) {
+        msg <- conditionMessage(w)
+        if (grepl("mbcsToSbcs|conversion failure on ' .*\\u279c'", msg)) {
+          invokeRestart("muffleWarning")
+        }
+      }
+    )
+  }
+
   #### Automatically get/write parameters from/to url ####
   selected_gene <- reactiveVal("")
   default_gene <- reactiveVal("")
+  selected_search_genes <- reactiveVal(c())
+  suppress_highlight_rows <- reactiveVal(FALSE)
   default_tab <- "PCA"
   observe({
     # Only set bookmarking non-default parameters
@@ -31,23 +46,58 @@ app_server <- function(input, output, session) {
     if (input$view == "data") {
       bookmarking_params <- union(
         bookmarking_params,
-        c("dataset", "gene", "tab")
+        c("dataset", "gene", "subh_gene", "tab")
       )
-      if (input$tab == default_tab) {
-        bookmarking_params <- setdiff(bookmarking_params, "tab")
-      }
+      # Input `gene` for BoxPlot and when gene is not default only
       if ((input$tab != "BoxPlot") || (input$gene == default_gene())) {
         bookmarking_params <- setdiff(bookmarking_params, "gene")
+      }
+      # Input `subh_gene` for HeatMap only.
+      if ((input$tab == "HeatMap") && length(input$subh_gene) > 0) {
+        bookmarking_params <- union(bookmarking_params, "subh_gene")
+      } else {
+        bookmarking_params <- setdiff(bookmarking_params, "subh_gene")
       }
     }
     to_exclude <- setdiff(names(input), bookmarking_params)
     setBookmarkExclude(to_exclude)
     session$doBookmark()
   })
-  onBookmarked(updateQueryString)
+  onBookmarked(function(url) {
+    split_url <- strsplit(url, "\\?", fixed = FALSE)[[1]]
+    base_url <- split_url[1]
+    query <- if (length(split_url) > 1) split_url[2] else ""
+    query_parts <- if (nzchar(query)) strsplit(query, "&", fixed = TRUE)[[1]] else character(0)
+
+    # Always drop stale subh_gene first, then re-add for HeatMap selections (only in data view).
+    query_parts <- query_parts[!grepl("^subh_gene=", query_parts)]
+    if (isTRUE(input$view == "data") && isTRUE(input$tab == "HeatMap") && length(input$subh_gene) > 0) {
+      heatmap_genes <- unique(trimws(sub("\\s*\\(.*$", "", input$subh_gene)))
+      gene_joined <- paste(heatmap_genes, collapse = "_")
+      query_parts <- c(
+        query_parts,
+        paste0("subh_gene=%22", utils::URLencode(gene_joined, reserved = TRUE), "%22")
+      )
+    }
+
+    clean_query <- paste(query_parts, collapse = "&")
+    clean_url <- if (nzchar(clean_query)) {
+      paste0(base_url, "?", clean_query)
+    } else {
+      base_url
+    }
+    updateQueryString(clean_url)
+  })
   onRestore(function(state) {
-    if (!is.null(state$input$gene)) {
-      selected_gene(state$input$gene)
+    if (state$input$tab == "BoxPlot" && !is.null(state$input$gene)) {
+        selected_gene(state$input$gene)
+    }
+    if (state$input$tab == "HeatMap" && !is.null(state$input$subh_gene)) {
+      decoded_genes <- utils::URLdecode(state$input$subh_gene)
+      decoded_genes <- gsub('^"|"$', "", decoded_genes)
+      restored_genes <- trimws(unlist(strsplit(decoded_genes, "[_,]")))
+      restored_genes <- restored_genes[nzchar(restored_genes)]
+      selected_search_genes(restored_genes)
     }
   })
 
@@ -92,6 +142,33 @@ app_server <- function(input, output, session) {
   })
   output$dataset_info <- renderUI(includeMarkdown(dataset_info()))
 
+  # Clear search gene buffer when dataset changes to avoid cross-dataset search carryover
+  observeEvent(input$dataset, {
+    suppress_highlight_rows(TRUE)
+    selected_search_genes(c())
+    # Immediately clear search input using Selectize API and URL
+    shinyjs::runjs("if ($('#subh_gene')[0].selectize) { $('#subh_gene')[0].selectize.clear(); }")
+    # Manually strip subh_gene from URL immediately
+    current_url <- session$clientData$url_pathname
+    current_search <- session$clientData$url_search
+    if (nzchar(current_search)) {
+      query_parts <- strsplit(current_search, "&", fixed = TRUE)[[1]]
+      query_parts <- query_parts[!grepl("^subh_gene=", query_parts)]
+      new_search <- if (length(query_parts) > 0) paste0("?", paste(query_parts, collapse = "&")) else ""
+      new_url <- paste0(current_url, new_search)
+      shinyjs::runjs(paste0("window.history.replaceState({}, '', '", new_url, "');"))
+    }
+    # make subheatmap null to reset to default message
+    .subheat_plot(NULL)
+  }, ignoreInit = TRUE)
+
+  # Release highlight suppression as soon as any search-bar input event arrives.
+  observeEvent(input$subh_gene, {
+    if (suppress_highlight_rows()) {
+      suppress_highlight_rows(FALSE)
+    }
+  }, ignoreInit = TRUE, priority = 1000)
+
   ht_colors <- reactiveVal(NULL)
   heatmap_data <- reactive({
     req(input$dataset)
@@ -113,10 +190,27 @@ app_server <- function(input, output, session) {
                        ")",
                        sep = "")
     # Update autocomplete choices for search bar
+    # If there are restored search genes, set them as selected
+    # Preserve the order from restored_genes
+    restored_genes <- selected_search_genes()
+    selected_value <- NULL
+    if (length(restored_genes) > 0) {
+      matched_full_names <- character(0)
+      for (gene in restored_genes) {
+        idx <- which(tolower(excel_ok$Gene) == tolower(gene))
+        if (length(idx) > 0) {
+          matched_full_names <- c(matched_full_names, row_names[idx[1]])
+        }
+      }
+      if (length(matched_full_names) > 0) {
+        selected_value <- matched_full_names
+      }
+    }
     updateSelectizeInput(
       session,
       "subh_gene",
-      choices = sort(unique(unlist(row_names))),
+      choices = unique(unlist(row_names)),
+      selected = selected_value,
       server = TRUE
     )
     # Check for duplicated row_names and add a number to make unique
@@ -133,6 +227,31 @@ app_server <- function(input, output, session) {
     # Calculate colors used for heatmap and subheatmap
     ht_colors(generate_heatmap_colors(excel_ok))
     return(excel_ok)
+  })
+
+  highlighted_rows <- reactive({
+    req(heatmap_data())
+    if (suppress_highlight_rows()) {
+      return(character(0))
+    }
+    search_terms <- input$subh_gene
+    if (is.null(search_terms) || length(search_terms) == 0) {
+      return(character(0))
+    }
+    row_labels <- rownames(heatmap_data())
+    row_labels_lc <- tolower(row_labels)
+
+    # Preserve search order by iterating through search_terms
+    matched_rows <- character(0)
+    for (term in search_terms) {
+      term_lc <- tolower(term)
+      matching_row <- row_labels[grepl(term_lc, row_labels_lc, fixed = TRUE)]
+      if (length(matching_row) > 0) {
+        # Add matching rows that haven't been added yet (avoid duplicates)
+        matched_rows <- c(matched_rows, setdiff(matching_row, matched_rows))
+      }
+    }
+    return(matched_rows)
   })
 
   pca_data <- reactive({
@@ -193,17 +312,25 @@ app_server <- function(input, output, session) {
   ht_obj <- reactiveVal(NULL)
   ht_pos_obj <- reactiveVal(NULL)
   .heatmap_plot <- reactive({
-    ht <- make_heatmap(heatmap_data(), ht_colors())
+    ht <- make_heatmap(
+      heatmap_data(),
+      ht_colors(),
+      highlight_rows = highlighted_rows()
+    )
     ht_pos <- htPositionsOnDevice(ht)
     ht_obj(ht)
     ht_pos_obj(ht_pos)
     return(ht)
   })
-  output$heatmap <- renderPlot(.heatmap_plot())
+  output$heatmap <- renderPlot(
+    muffle_arrow_warning(.heatmap_plot())
+  )
 
   #### Create sub-heatmap ####
   sub_data <- reactiveVal(NULL)
   .subheat_plot <- reactiveVal(NULL)
+  ignore_next_empty_subh_gene <- reactiveVal(FALSE)
+  heatmap_recalculating <- reactiveVal(FALSE)
   # From selection on heamap
   observeEvent(input$heatmap_brush, {
     lt <- getPositionFromBrush(input$heatmap_brush)
@@ -224,19 +351,27 @@ app_server <- function(input, output, session) {
     } else {
       .subheat_plot(make_sub_heatmap(sub_data(), ht_colors()))
       shinyjs::show("subheat_save_as-save_as_button")
+      ignore_next_empty_subh_gene(TRUE)
       updateSelectizeInput(session, "subh_gene", selected = "")
     }
     output$sub_heatmap <- renderPlot({
-      .subheat_plot()
+      muffle_arrow_warning(.subheat_plot())
     })
   })
   # From search textbox
   observeEvent(input$subh_gene, {
-    grep_str <- paste(input$subh_gene, collapse = "|")
-    if (grep_str != "") {
-      output$sub_heat_chosen_genes <- renderPrint(grep_str)
-      sub_rows <- grep(grep_str, rownames(heatmap_data()), ignore.case = TRUE)
-      sub_data(heatmap_data()[sub_rows, ])
+    heatmap_recalculating(TRUE)
+    on.exit(heatmap_recalculating(FALSE))
+
+    # Skip one empty-input event caused by brush selection clearing subh_gene.
+    if (ignore_next_empty_subh_gene() && length(input$subh_gene) == 0) {
+      ignore_next_empty_subh_gene(FALSE)
+      return()
+    }
+
+    matching_rows <- highlighted_rows()
+    if (length(input$subh_gene) > 0) {
+      sub_data(heatmap_data()[matching_rows, , drop = FALSE])
       if (nrow(sub_data()) == 0) {
         .subheat_plot(NULL)
         shinyjs::hide("subheat_save_as-save_as_button")
@@ -247,13 +382,14 @@ app_server <- function(input, output, session) {
         shinyjs::hide("heatmap_brush")
       }
       output$sub_heatmap <- renderPlot({
-        .subheat_plot()
+        muffle_arrow_warning(.subheat_plot())
       })
     } else {
       .subheat_plot(NULL)
       shinyjs::hide("subheat_save_as-save_as_button")
+      shinyjs::show("heatmap_brush")
     }
-  })
+  }, ignoreNULL = FALSE)
   output$sub_heat <- renderUI({
     if (is.null(.subheat_plot())) {
       return(HTML(
@@ -265,6 +401,28 @@ app_server <- function(input, output, session) {
       ))
     } else {
       return(plotOutput("sub_heatmap", width = 600, height = 500))
+    }
+  })
+
+  # Apply stale state to subheatmap immediately when search or dataset changes
+  observe({
+    input$subh_gene
+    input$dataset
+    shinyjs::addClass(id = "sub_heatmap", class = "recalculating")
+    shinyjs::addClass(id = "heatmap_save_as-save_as_button", class = "recalculating")
+    shinyjs::addClass(id = "heatmap_save_as-save_as_options", class = "recalculating")
+    shinyjs::addClass(id = "subheat_save_as-save_as_button", class = "recalculating")
+    shinyjs::addClass(id = "subheat_save_as-save_as_options", class = "recalculating")
+  }, priority = 1000)
+
+  # Remove stale state after recalculation flag clears
+  observe({
+    if (!heatmap_recalculating()) {
+      shinyjs::removeClass(id = "sub_heatmap", class = "recalculating")
+      shinyjs::removeClass(id = "heatmap_save_as-save_as_button", class = "recalculating")
+      shinyjs::removeClass(id = "heatmap_save_as-save_as_options", class = "recalculating")
+      shinyjs::removeClass(id = "subheat_save_as-save_as_button", class = "recalculating")
+      shinyjs::removeClass(id = "subheat_save_as-save_as_options", class = "recalculating")
     }
   })
 
