@@ -329,6 +329,7 @@ app_server <- function(input, output, session) {
   #### Create sub-heatmap ####
   sub_data <- reactiveVal(NULL)
   .subheat_plot <- reactiveVal(NULL)
+  ignore_next_empty_subh_gene <- reactiveVal(FALSE)
   heatmap_recalculating <- reactiveVal(FALSE)
   # From selection on heamap
   observeEvent(input$heatmap_brush, {
@@ -350,6 +351,7 @@ app_server <- function(input, output, session) {
     } else {
       .subheat_plot(make_sub_heatmap(sub_data(), ht_colors()))
       shinyjs::show("subheat_save_as-save_as_button")
+      ignore_next_empty_subh_gene(TRUE)
       updateSelectizeInput(session, "subh_gene", selected = "")
     }
     output$sub_heatmap <- renderPlot({
@@ -360,6 +362,13 @@ app_server <- function(input, output, session) {
   observeEvent(input$subh_gene, {
     heatmap_recalculating(TRUE)
     on.exit(heatmap_recalculating(FALSE))
+
+    # Skip one empty-input event caused by brush selection clearing subh_gene.
+    if (ignore_next_empty_subh_gene() && length(input$subh_gene) == 0) {
+      ignore_next_empty_subh_gene(FALSE)
+      return()
+    }
+
     matching_rows <- highlighted_rows()
     if (length(input$subh_gene) > 0) {
       sub_data(heatmap_data()[matching_rows, , drop = FALSE])
