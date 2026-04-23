@@ -143,11 +143,11 @@ app_ui <- function(request) {
                 div(class = "container", style = "column-gap: 10px;",
                   div(
                     plotOutput("heatmap",
-                      width = 250,
+                      width = 300,
                       height = 500,
                       brush = "heatmap_brush"
                     ),
-                    save_as_ui("heatmap_save_as", 250, 500),
+                    save_as_ui("heatmap_save_as", 300, 500),
                   ),
                   div(
                     uiOutput("sub_heat"),
