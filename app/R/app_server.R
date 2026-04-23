@@ -346,7 +346,7 @@ app_server <- function(input, output, session) {
       shinyjs::hide("subheat_save_as-save_as_button")
       shinyjs::show("heatmap_brush")
     }
-  })
+  }, ignoreNULL = FALSE)
   output$sub_heat <- renderUI({
     if (is.null(.subheat_plot())) {
       return(HTML(
