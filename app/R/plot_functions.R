@@ -250,7 +250,8 @@ bar_plot <- function(gene_dropdown, df) {
     scale_y_continuous(name = "Normalized Log2-protein intensity") +
     theme_light() +
     theme(text = element_text(family = font_family_web, size = title_fontsize),
-          axis.text.x = element_text(size = label_fontsize, angle = 45),
+          axis.text.x = element_text(size = label_fontsize,
+                 angle = 45, hjust = 1, vjust = 1),
           axis.text.y = element_text(size = label_fontsize),
           legend.position = "none") +
     scale_fill_manual(values = hcl.colors(length(unique(df_plot$experiment_type)))) +
@@ -275,7 +276,8 @@ box_plot <- function(gene_dropdown, df) {
     scale_y_continuous(name = "Normalized Log2-protein intensity") +
     theme_light() +
     theme(text = element_text(family = font_family_web, size = title_fontsize),
-          axis.text.x = element_text(size = label_fontsize, angle = 45),
+          axis.text.x = element_text(size = label_fontsize,
+                 angle = 45, hjust = 1, vjust = 1),
           axis.text.y = element_text(size = label_fontsize),
           legend.position = "none") +
     scale_fill_manual(values = hcl.colors(length(unique(df_plot$experiment_type))))
