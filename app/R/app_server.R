@@ -34,6 +34,7 @@ app_server <- function(input, output, session) {
   selected_gene <- reactiveVal("")
   default_gene <- reactiveVal("")
   selected_search_genes <- reactiveVal(c())
+  suppress_highlight_rows <- reactiveVal(FALSE)
   default_tab <- "PCA"
   observe({
     # Only set bookmarking non-default parameters
@@ -141,6 +142,33 @@ app_server <- function(input, output, session) {
   })
   output$dataset_info <- renderUI(includeMarkdown(dataset_info()))
 
+  # Clear search gene buffer when dataset changes to avoid cross-dataset search carryover
+  observeEvent(input$dataset, {
+    suppress_highlight_rows(TRUE)
+    selected_search_genes(c())
+    # Immediately clear search input using Selectize API and URL
+    shinyjs::runjs("if ($('#subh_gene')[0].selectize) { $('#subh_gene')[0].selectize.clear(); }")
+    # Manually strip subh_gene from URL immediately
+    current_url <- session$clientData$url_pathname
+    current_search <- session$clientData$url_search
+    if (nzchar(current_search)) {
+      query_parts <- strsplit(current_search, "&", fixed = TRUE)[[1]]
+      query_parts <- query_parts[!grepl("^subh_gene=", query_parts)]
+      new_search <- if (length(query_parts) > 0) paste0("?", paste(query_parts, collapse = "&")) else ""
+      new_url <- paste0(current_url, new_search)
+      shinyjs::runjs(paste0("window.history.replaceState({}, '', '", new_url, "');"))
+    }
+    # make subheatmap null to reset to default message
+    .subheat_plot(NULL)
+  }, ignoreInit = TRUE)
+
+  # Release highlight suppression as soon as any search-bar input event arrives.
+  observeEvent(input$subh_gene, {
+    if (suppress_highlight_rows()) {
+      suppress_highlight_rows(FALSE)
+    }
+  }, ignoreInit = TRUE, priority = 1000)
+
   ht_colors <- reactiveVal(NULL)
   heatmap_data <- reactive({
     req(input$dataset)
@@ -203,6 +231,9 @@ app_server <- function(input, output, session) {
 
   highlighted_rows <- reactive({
     req(heatmap_data())
+    if (suppress_highlight_rows()) {
+      return(character(0))
+    }
     search_terms <- input$subh_gene
     if (is.null(search_terms) || length(search_terms) == 0) {
       return(character(0))
