@@ -47,31 +47,40 @@ save_as_ui <- function(id,
       id = NS(id, "save_as_options"),
       style = "display: none;",
       div(
+        style = "display: flex;
+          flex-direction: column;
+          align-items: center;",
+        div(
+          style = "
+          height: 38px;",
+          selectInput(
+            NS(id, "download_format"),
+            label = NULL,
+            choices = c("png", "svg", "pdf"),
+            selected = "png",
+            width = "110px"
+          )
+        ),
+        div(
+          id = NS(id, "resolution_container"),
+          style = "display: flex;
+          flex-direction: row;
+          height: 30px;",
+          numericInput(
+            NS(id, "download_image_resolution"),
+            label = NULL,
+            value = default_dpi,
+            width = "80px",
+          ),
+          span("dpi", style = "margin-left: 5px; margin-top: 5px;")
+        )
+      ),
+      div(
         downloadButton(
           NS(id, "download_button"),
           "Save image",
           class = "btn-info",
-          style = "padding: 20px 10px;"
-        )
-      ),
-      div(
-        style = "display: none;",
-        radioButtons(
-          NS(id, "download_format"),
-          label = "Format:",
-          choices = list("png",
-                         "pdf",
-                         "svg"),
-          selected = "png",
-          inline = TRUE
-        )
-      ),
-      div(
-        numericInput(
-          NS(id, "download_image_resolution"),
-          label = "Resolution [dpi]",
-          value = default_dpi,
-          width = "120px"
+          style = "padding: 25px 10px;"
         )
       ),
       div(
@@ -113,6 +122,17 @@ save_as_server <- function(id,
       # Scroll to the bottom of the page
       shinyjs::runjs("window.scrollTo(0,document.body.scrollHeight);")
     })
+    # Show resolution control for PNG only.
+    observe({
+      req(input$download_format)
+      if (identical(input$download_format, "png")) {
+        sel = paste("#", id, "-resolution_container", sep = "")
+        shinyjs::show(selector = sel)
+      } else {
+        sel = paste("#", id, "-resolution_container", sep = "")
+        shinyjs::hide(selector = sel)
+      }
+    })
     output$download_button <- downloadHandler(
       filename = function() {
         paste(
@@ -127,33 +147,65 @@ save_as_server <- function(id,
       content = function(file) {
         screen_dpi <- 72
         dpi <- input$download_image_resolution
-        w <- input$download_image_width
-        h <- input$download_image_height
-        w <- as.integer(dpi * w / screen_dpi)
-        h <- as.integer(dpi * h / screen_dpi)
+        w_px <- as.integer(dpi * input$download_image_width / screen_dpi)
+        h_px <- as.integer(dpi * input$download_image_height / screen_dpi)
+        w_in <- input$download_image_width / screen_dpi
+        h_in <- input$download_image_height / screen_dpi
         format <- input$download_format
-        if (format == "png") {
-          png(file, width = w, height = h, units = "px", res = dpi)
-        } else if (format == "pdf") {
-          pdf(file, width = w, height = h)
-        } else if (format == "svg") {
-          svg(file, width = w, height = h)
-        }
         if (class(plot)[1] %in% c("Heatmap", "HeatmapList", "ComplexHeatmap")) {
-          print(plot)
-          dev.off()
+          # Complex heatmaps (from ComplexHeatmap package)
+          if (format == "png") {
+            png(file, width = w_px, height = h_px, units = "px", res = dpi)
+            print(plot)
+            dev.off()
+          } else if (format == "svg") {
+            svg(file, width = w_in, height = h_in)
+            print(plot)
+            dev.off()
+          } else if (format == "pdf") {
+            if (capabilities("cairo")) {
+              grDevices::cairo_pdf(file, width = w_in, height = h_in)
+            } else {
+              pdf(file, width = w_in, height = h_in)
+            }
+            print(plot)
+            dev.off()
+          }
           return()
+        } else {
+          # ggplot objects
+          if (format == "png") {
+            ggsave(
+              filename = file,
+              plot = plot,
+              dpi = dpi,
+              device = format
+            )
+          } else if (format == "svg") {
+            ggsave(
+              filename = file,
+              plot = plot,
+              width = w_in,
+              height = h_in,
+              units = "in",
+              device = "svg"
+            )
+          } else if (format == "pdf") {
+            plot_pdf <- if (inherits(plot, "ggplot")) {
+              plot + theme(text = element_text(family = "sans"))
+            } else {
+              plot
+            }
+            ggsave(
+              filename = file,
+              plot = plot_pdf,
+              width = w_in,
+              height = h_in,
+              units = "in",
+              device = "pdf"
+            )
+          }
         }
-        ggsave(
-          filename = file,
-          plot = plot,
-          dpi = dpi,
-          # units = "px",
-          # width = w,
-          # height = h,
-          device = format
-        )
-        dev.off()
       }
     )
   })
