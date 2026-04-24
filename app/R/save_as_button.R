@@ -163,7 +163,11 @@ save_as_server <- function(id,
             print(plot)
             dev.off()
           } else if (format == "pdf") {
-            pdf(file, width = w_in, height = h_in)
+            if (capabilities("cairo")) {
+              grDevices::cairo_pdf(file, width = w_in, height = h_in)
+            } else {
+              pdf(file, width = w_in, height = h_in)
+            }
             print(plot)
             dev.off()
           }
