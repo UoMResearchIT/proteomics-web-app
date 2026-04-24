@@ -51,13 +51,14 @@ save_as_ui <- function(id,
           flex-direction: column;
           align-items: center;",
         div(
-          radioButtons(
+          style = "
+          height: 38px;",
+          selectInput(
             NS(id, "download_format"),
             label = NULL,
-            choices = list("png",
-                          "svg"),
+            choices = c("png", "svg", "pdf"),
             selected = "png",
-            inline = TRUE
+            width = "110px"
           )
         ),
         div(
@@ -151,31 +152,31 @@ save_as_server <- function(id,
         w_in <- input$download_image_width / screen_dpi
         h_in <- input$download_image_height / screen_dpi
         format <- input$download_format
-        if (format == "png") {
-          png(file, width = w_px, height = h_px, units = "px", res = dpi)
-        } else if (format == "svg") {
-          svg(file, width = w_in, height = h_in)
-        }
         if (class(plot)[1] %in% c("Heatmap", "HeatmapList", "ComplexHeatmap")) {
           # Complex heatmaps (from ComplexHeatmap package)
           if (format == "png") {
+            png(file, width = w_px, height = h_px, units = "px", res = dpi)
             print(plot)
             dev.off()
           } else if (format == "svg") {
             svg(file, width = w_in, height = h_in)
             print(plot)
             dev.off()
+          } else if (format == "pdf") {
+            pdf(file, width = w_in, height = h_in)
+            print(plot)
+            dev.off()
           }
           return()
         } else {
+          # ggplot objects
           if (format == "png") {
-              ggsave(
+            ggsave(
               filename = file,
               plot = plot,
               dpi = dpi,
               device = format
             )
-            dev.off()
           } else if (format == "svg") {
             ggsave(
               filename = file,
@@ -184,6 +185,20 @@ save_as_server <- function(id,
               height = h_in,
               units = "in",
               device = "svg"
+            )
+          } else if (format == "pdf") {
+            plot_pdf <- if (inherits(plot, "ggplot")) {
+              plot + theme(text = element_text(family = "sans"))
+            } else {
+              plot
+            }
+            ggsave(
+              filename = file,
+              plot = plot_pdf,
+              width = w_in,
+              height = h_in,
+              units = "in",
+              device = "pdf"
             )
           }
         }
